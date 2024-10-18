@@ -641,23 +641,6 @@ void AccessibilityObject::insertChild(AXCoreObject* newChild, unsigned index, De
         }
     }
 
-    RefPtr displayContentsParent = child->displayContentsParent();
-    // To avoid double-inserting a child of a `display: contents` element, only insert if `this` is the rightful parent.
-    if (displayContentsParent && displayContentsParent != this) {
-        // Make sure the display:contents parent object knows it has a child it needs to add.
-        displayContentsParent->setNeedsToUpdateChildren();
-
-        // Don't exit early for certain table components, as they rely on inserting children for which they are not the rightful parent to behave correctly.
-        bool allowInsert = isTableColumn() || roleValue() == AccessibilityRole::TableHeaderContainer;
-
-        // AccessibilityTable::addChildren never actually calls `insertChild` for table section elements
-        // (e.g. tbody, thead), so don't block this `insertChild` for display:contents section elements,
-        // or else the child elements of the section element will never be inserted into the tree.
-        allowInsert = allowInsert || (isAccessibilityTableInstance() && is<HTMLTableSectionElement>(displayContentsParent->element()));
-        if (!allowInsert)
-            return;
-    }
-
     auto thisAncestorFlags = computeAncestorFlags();
     child->initializeAncestorFlags(thisAncestorFlags);
     setIsIgnoredFromParentDataForChild(child);
@@ -1748,7 +1731,7 @@ Vector<RetainPtr<id>> AccessibilityObject::modelElementChildren()
 }
 #endif
 
-// Finds a RenderListItem parent give a node.
+// Finds a RenderListItem parent given a node.
 static RenderListItem* renderListItemContainer(Node* node)
 {
     for (; node; node = node->parentNode()) {

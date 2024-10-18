@@ -655,7 +655,6 @@ enum class TrimWhitespace : bool { No, Yes };
 struct TextUnderElementMode {
     enum class Children : uint8_t {
         SkipIgnoredChildren,
-        IncludeAllChildren,
         IncludeNameFromContentsChildren, // This corresponds to ARIA concept: nameFrom
     };
 
