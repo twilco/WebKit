@@ -1765,6 +1765,11 @@ webkit.org/b/275913 [ Debug ] imported/w3c/web-platform-tests/media-source/dedic
 
 webkit.org/b/275873 storage/indexeddb/database-transaction-cycle.html [ Pass Failure ]
 
+accessibility/mac/scrolling-in-pdf-crash-post-sequoia.html [ Pass ]
+[ Sequoia+ ] accessibility/mac/scrolling-in-pdf-crash-pre-sequoia.html [ Skip ]
+accessibility/mac/scrolling-in-pdf-crash-post-sequoia.html [ Skip ]
+[ Sequoia+ ] accessibility/mac/scrolling-in-pdf-crash-post-sequoia.html [ Pass ]
+
 # rdar://135211047
 [ Sequoia+ ] http/tests/resourceLoadStatistics/do-not-remove-blocking-in-redirect.https.html [ Failure ]
 [ Sequoia+ ] http/tests/privateClickMeasurement/send-attribution-conversion-request.https.html [ Failure ]
