@@ -79,7 +79,6 @@ public:
     AccessibilityObject* previousSibling() const final;
     AccessibilityObject* nextSibling() const final;
     AccessibilityObject* parentObject() const override;
-    AccessibilityObject* parentObjectIfExists() const override;
     AccessibilityObject* observableObject() const override;
     AXCoreObject* titleUIElement() const override;
 
@@ -170,9 +169,7 @@ private:
 
     bool renderObjectIsObservable(RenderObject&) const;
     RenderObject* renderParentObject() const;
-#if USE(ATSPI)
     RenderObject* markerRenderer() const;
-#endif
 
     bool isSVGImage() const;
     void detachRemoteSVGRoot();
@@ -182,15 +179,11 @@ private:
     void offsetBoundingBoxForRemoteSVGElement(LayoutRect&) const;
     bool supportsPath() const override;
 
-    void addNodeOnlyChildren();
     void addTextFieldChildren();
     void addImageMapChildren();
-    void addCanvasChildren();
     void addAttachmentChildren();
     void addRemoteSVGChildren();
-#if USE(ATSPI)
     void addListItemMarker();
-#endif
 #if PLATFORM(COCOA)
     void updateAttachmentViewParents();
 #endif
@@ -200,7 +193,7 @@ private:
 
     bool inheritsPresentationalRole() const override;
 
-    bool shouldGetTextFromNode(TextUnderElementMode) const;
+    bool shouldGetTextFromNode() const;
 
 #if ENABLE(APPLE_PAY)
     bool isApplePayButton() const;

@@ -571,9 +571,6 @@ TextStream& operator<<(WTF::TextStream& stream, const TextUnderElementMode& mode
     case TextUnderElementMode::Children::SkipIgnoredChildren:
         childrenInclusion = "SkipIgnoredChildren"_s;
         break;
-    case TextUnderElementMode::Children::IncludeAllChildren:
-        childrenInclusion = "IncludeAllChildren"_s;
-        break;
     case TextUnderElementMode::Children::IncludeNameFromContentsChildren:
         childrenInclusion = "IncludeNameFromContentsChildren"_s;
         break;

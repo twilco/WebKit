@@ -37,6 +37,7 @@
 #include "AccessibilityListBox.h"
 #include "AccessibilitySpinButton.h"
 #include "AccessibilityTable.h"
+#include "ComposedTreeIterator.h"
 #include "DateComponents.h"
 #include "Editing.h"
 #include "ElementAncestorIteratorInlines.h"
@@ -186,11 +187,6 @@ AccessibilityObject* AccessibilityNodeObject::nextSibling() const
     return objectCache ? objectCache->getOrCreate(*nextSibling) : nullptr;
 }
 
-AccessibilityObject* AccessibilityNodeObject::parentObjectIfExists() const
-{
-    return parentObject();
-}
-
 AccessibilityObject* AccessibilityNodeObject::ownerParentObject() const
 {
     auto owners = this->owners();
@@ -206,13 +202,12 @@ AccessibilityObject* AccessibilityNodeObject::parentObject() const
     if (auto* ownerParent = ownerParentObject())
         return ownerParent;
 
-    Node* parentObj = node()->parentNode();
-    if (!parentObj)
-        return nullptr;
-
-    if (AXObjectCache* cache = axObjectCache())
-        return cache->getOrCreate(*parentObj);
-
+    RefPtr node = this->node();
+    if (RefPtr parentNode = node ? node->parentElementInComposedTree() : nullptr) {
+        CheckedPtr cache = axObjectCache();
+        if (auto* parent = cache ? cache->getOrCreate(*parentNode) : nullptr)
+            return parent;
+    }
     return nullptr;
 }
 
@@ -586,7 +581,7 @@ void AccessibilityNodeObject::addChildren()
         m_subtreeDirty = false;
     });
 
-    WeakPtr node = this->node();
+    RefPtr node = this->node();
     if (!node || !canHaveChildren())
         return;
 
@@ -594,12 +589,14 @@ void AccessibilityNodeObject::addChildren()
     if (renderer() && !node->hasTagName(canvasTag))
         return;
 
-    auto objectCache = axObjectCache();
-    if (!objectCache)
+    CheckedPtr cache = axObjectCache();
+    if (!cache)
         return;
 
-    for (auto* child = node->firstChild(); child; child = child->nextSibling())
-        addChild(objectCache->getOrCreate(*child));
+    if (auto* containerNode = dynamicDowncast<ContainerNode>(*node)) {
+        for (Ref child : composedTreeChildren(*containerNode))
+            addChild(cache->getOrCreate(child.get()));
+    }
 
     updateOwnedChildren();
 }
@@ -2204,10 +2201,6 @@ void AccessibilityNodeObject::setIsExpanded(bool expand)
 // we should include the inner text of this given descendant object or skip it.
 static bool shouldUseAccessibilityObjectInnerText(AccessibilityObject& object, TextUnderElementMode mode)
 {
-    // Do not use any heuristic if we are explicitly asking to include all the children.
-    if (mode.childrenInclusion == TextUnderElementMode::Children::IncludeAllChildren)
-        return true;
-
     // Consider this hypothetical example:
     // <div tabindex=0>
     //   <h2>
