@@ -35,6 +35,7 @@
 #include "AXLoggerBase.h"
 #include "AXObjectCache.h"
 #include "AXObjectCacheInlines.h"
+#include "AXObjectRareData.h"
 #include "AXRemoteFrame.h"
 #include "AXSearchManager.h"
 #include "AXTextMarker.h"
@@ -4338,6 +4339,19 @@ AccessibilityObject* AccessibilityObject::containingWebArea() const
     CheckedPtr cache = axObjectCache();
     RefPtr root = cache ? dynamicDowncast<AccessibilityScrollView>(cache->getOrCreate(frameView.get())) : nullptr;
     return root ? root->webAreaObject() : nullptr;
+}
+
+AXObjectRareData& AccessibilityObject::ensureRareData()
+{
+    if (!hasRareData())
+        m_rareDataWithBitfields.setPointer(makeUnique<AXObjectRareData>());
+    return *rareData();
+}
+
+void AccessibilityObject::clearRareData()
+{
+    ASSERT(hasRareData());
+    m_rareDataWithBitfields.setPointer(nullptr);
 }
 
 } // namespace WebCore

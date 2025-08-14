@@ -558,6 +558,7 @@ accessibility/AXGeometryManager.cpp
 accessibility/AXLogger.cpp
 accessibility/AXLoggerBase.cpp
 accessibility/AXObjectCache.cpp
+accessibility/AXObjectRareData.cpp
 accessibility/AXRemoteFrame.cpp
 accessibility/AXSearchManager.cpp
 accessibility/AXTextMarker.cpp

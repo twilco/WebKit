@@ -37,6 +37,7 @@
 #include "Path.h"
 #include "TextIterator.h"
 #include <iterator>
+#include <wtf/CompactUniquePtrTuple.h>
 #include <wtf/Forward.h>
 #include <wtf/Function.h>
 #include <wtf/RefPtr.h>
@@ -53,6 +54,12 @@ OBJC_CLASS NSString;
 OBJC_CLASS NSValue;
 OBJC_CLASS NSView;
 #endif
+
+namespace WebCore {
+class AXObjectRareData;
+}
+
+WTF_ALLOW_COMPACT_POINTERS_TO_INCOMPLETE_TYPE(WebCore::AXObjectRareData);
 
 namespace WebCore {
 
@@ -938,10 +945,16 @@ private:
 
     virtual CommandType commandType() const;
 
+    bool hasRareData() const { return !!m_rareDataWithBitfields.pointer(); }
+    AXObjectRareData* rareData() const { return m_rareDataWithBitfields.pointer(); }
+    AXObjectRareData& ensureRareData();
+    void clearRareData();
+
 protected: // FIXME: Make the data members private.
     AccessibilityChildrenVector m_children;
 private:
     const WeakPtr<AXObjectCache> m_axObjectCache;
+    CompactUniquePtrTuple<AXObjectRareData, uint16_t> m_rareDataWithBitfields;
 #if PLATFORM(IOS_FAMILY)
     InlineTextPrediction m_lastPresentedTextPrediction;
     InlineTextPrediction m_lastPresentedTextPredictionComplete;
