@@ -32,6 +32,7 @@
 #include "CSSValueList.h"
 #include "DocumentView.h"
 #include "ElementInlines.h"
+#include "HTMLElement.h"
 #include "HTMLImageElement.h"
 #include "HTMLMapElement.h"
 #include "HTMLMediaElement.h"
@@ -506,6 +507,12 @@ RefPtr<Node> lastNode(const FixedVector<AXID>& axIDs, AXObjectCache& cache)
         }
     }
     return nullptr;
+}
+
+bool isPopoverElement(const Node* node)
+{
+    RefPtr element = dynamicDowncast<HTMLElement>(node);
+    return element && element->hasAttributeWithoutSynchronization(popoverAttr);
 }
 
 } // namespace WebCore

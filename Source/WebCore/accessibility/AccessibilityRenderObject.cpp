@@ -2541,6 +2541,10 @@ AccessibilityRole AccessibilityRenderObject::determineAccessibilityRole()
             return parentTable->hasGridRole() ? AccessibilityRole::GridCell : AccessibilityRole::Cell;
     }
 
+    // Per HTML AAM, elements with the popover attribute have a minimum role of group.
+    if (roleFromNode == AccessibilityRole::Generic && isPopoverElement(node.get()))
+        return AccessibilityRole::Group;
+
     if (roleFromNode != AccessibilityRole::Unknown)
         return roleFromNode;
 
