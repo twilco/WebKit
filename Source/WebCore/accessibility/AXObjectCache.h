@@ -529,6 +529,7 @@ public:
 
     static void initializeUserDefaultValues();
     static bool accessibilityDOMIdentifiersEnabled() { return gAccessibilityDOMIdentifiersEnabled; }
+    WEBCORE_EXPORT static bool shouldForceAccessibilityEnabled();
 #endif
 
     static bool forceInitialFrameCaching() { return gForceInitialFrameCaching; }
@@ -1027,7 +1028,15 @@ private:
 
 inline bool AXObjectCache::accessibilityEnabled()
 {
-    return gAccessibilityEnabled;
+    if (gAccessibilityEnabled)
+        return true;
+#if PLATFORM(COCOA)
+    if (shouldForceAccessibilityEnabled()) [[unlikely]] {
+        enableAccessibility();
+        return true;
+    }
+#endif
+    return false;
 }
 
 inline void AXObjectCache::enableAccessibility()

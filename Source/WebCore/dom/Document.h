@@ -829,6 +829,7 @@ public:
     bool updateLayoutIfDimensionsOutOfDate(Element&, OptionSet<DimensionsCheck> = { DimensionsCheck::Width, DimensionsCheck::Height }, OptionSet<LayoutOptions> = { });
 
     inline AXObjectCache* existingAXObjectCache() const;
+    void createAXObjectCacheIfNeeded() const { std::ignore = axObjectCache(); }
     WEBCORE_EXPORT AXObjectCache* axObjectCache() const;
     WEBCORE_EXPORT CheckedPtr<AXObjectCache> checkedAXObjectCache() const;
     void clearAXObjectCache();

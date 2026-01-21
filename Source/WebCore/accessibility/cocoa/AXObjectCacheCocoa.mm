@@ -32,6 +32,16 @@
 
 namespace WebCore {
 
+bool AXObjectCache::shouldForceAccessibilityEnabled()
+{
+    // Cached to ensure we only read the preference once for performance.
+    static bool cachedValue = [] {
+        RetainPtr userDefaults = adoptNS([[NSUserDefaults alloc] initWithSuiteName:@"com.apple.Accessibility"]);
+        return [userDefaults boolForKey:@"ShouldForceWebKitAccessibilityEnabled"];
+    }();
+    return cachedValue;
+}
+
 RetainPtr<NSString> notifyPriorityToAXValueString(NotifyPriority priority)
 {
     switch (priority) {

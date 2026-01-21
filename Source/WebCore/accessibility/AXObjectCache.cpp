@@ -303,6 +303,11 @@ AXObjectCache::AXObjectCache(LocalFrame& localFrame, Document* document)
 #endif
 
     AXTreeStore::add(m_id, WeakPtr { this });
+
+#if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
+    if (shouldForceAccessibilityEnabled()) [[unlikely]]
+        buildIsolatedTreeIfNeeded();
+#endif
 }
 
 AXObjectCache::~AXObjectCache()

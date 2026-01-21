@@ -755,6 +755,9 @@ Document::Document(LocalFrame* frame, const Settings& settings, const URL& url, 
 
     if (!settings.mutationEventsEnabled())
         m_shouldNotFireMutationEvents = true;
+
+    if (AXObjectCache::shouldForceAccessibilityEnabled()) [[unlikely]]
+        createAXObjectCacheIfNeeded();
 }
 
 void Document::populateDocumentSyncDataForNewlyConstructedDocument(DocumentSyncDataType dataType)

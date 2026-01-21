@@ -753,15 +753,24 @@ bool AXObjectCache::isIsolatedTreeEnabled()
         return true;
 
     if (!isMainThread()) {
-        AX_ASSERT(_AXUIElementRequestServicedBySecondaryAXThread());
+        AX_ASSERT(clientIsInTestMode() || _AXUIElementRequestServicedBySecondaryAXThread());
         enabled = true;
     } else {
-        enabled = DeprecatedGlobalSettings::isAccessibilityIsolatedTreeEnabled() // Used to turn off in apps other than Safari, e.g., Mail.
-            && _AXSIsolatedTreeModeFunctionIsAvailable()
-            && _AXSIsolatedTreeMode_Soft() != AXSIsolatedTreeModeOff // Used to switch via system defaults.
-            && clientSupportsIsolatedTree();
-    }
+        // Used to turn off in apps other than Safari, e.g., Mail.
+        bool isSettingEnabled = DeprecatedGlobalSettings::isAccessibilityIsolatedTreeEnabled();
 
+        bool environmentAllowsITM = (isSettingEnabled && clientSupportsIsolatedTree());
+        if (AXObjectCache::shouldForceAccessibilityEnabled()) [[unlikely]] {
+            // We primarily use this forced-accessibility mode to test accessibility in Speedometer
+            // and other benchmarks, and ITM is a more useful configuration to test in those contexts.
+            environmentAllowsITM = true;
+        }
+
+        enabled = environmentAllowsITM
+            && _AXSIsolatedTreeModeFunctionIsAvailable()
+            // Used to switch via system defaults.
+            && _AXSIsolatedTreeMode_Soft() != AXSIsolatedTreeModeOff;
+    }
     return enabled;
 }
 
