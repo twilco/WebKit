@@ -1201,12 +1201,22 @@ FloatRect AXIsolatedObject::relativeFrame() const
 
     // Mock objects and SVG objects need use the main thread since they do not have render nodes and are not painted with layers, respectively.
     // FIXME: Remove isNonLayerSVGObject when LBSE is enabled & SVG frames are cached.
-    if (!AXObjectCache::shouldServeInitialCachedFrame() || isNonLayerSVGObject()) {
-        return Accessibility::retrieveValueFromMainThread<FloatRect>([context = mainThreadContext()] () -> FloatRect {
+    bool shouldServeInitialFrame = AXObjectCache::shouldServeInitialCachedFrame();
+    if (!shouldServeInitialFrame || isNonLayerSVGObject()) {
+        // If the request demands that we don't serve the (probably somewhat inaccurate) initial frame, use a much
+        // longer timeout (5 seconds). For requests that prioritize responsiveness (shouldServeInitialFrame), use
+        // a 10ms timeout.
+        Seconds timeout = shouldServeInitialFrame ? 10_ms : 5_s;
+
+        auto timeoutableValue = Accessibility::retrieveValueFromMainThreadWithTimeout([context = mainThreadContext()] () -> FloatRect {
             if (RefPtr axObject = context.axObjectOnMainThread())
                 return axObject->relativeFrame();
             return { };
-        });
+        }, timeout);
+
+        if (timeoutableValue.value)
+            return *timeoutableValue.value;
+        // If we timed out, fall through to the code below which handles the no-bounding-box case.
     }
 
     // Having an empty relative frame at this point means a frame hasn't been cached yet.
