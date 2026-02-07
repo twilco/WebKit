@@ -1143,6 +1143,9 @@ TextStream& operator<<(WTF::TextStream& stream, AXProperty property)
     case AXProperty::RevealableText:
         stream << "RevealableText";
         break;
+    case AXProperty::RoleBeforeAria:
+        stream << "RoleBeforeAria";
+        break;
     case AXProperty::RolePlatformString:
         stream << "RolePlatformString";
         break;
