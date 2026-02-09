@@ -127,6 +127,7 @@
 #include "SVGImage.h"
 #include "SVGSVGElement.h"
 #include "ShadowRootMode.h"
+#include "SpaceSplitString.h"
 #include "StylePrimitiveNumericTypes+Evaluation.h"
 #include "Text.h"
 #include "TextControlInnerElements.h"
@@ -1369,17 +1370,37 @@ bool AccessibilityRenderObject::computeIsIgnored() const
         else
             altTextInclusion = objectInclusionFromAltText(altTextFromAttributeOrStyle());
 
-        if (altTextInclusion == AccessibilityObjectInclusion::IgnoreObject)
-            return true;
         if (altTextInclusion == AccessibilityObjectInclusion::IncludeObject)
             return false;
 
         // webkit.org/b/173870 - If an image has other alternative text, don't ignore it if alt text is empty.
-        // This means we should process title and aria-label first.
+        // Per HTML-AAM, aria-label and valid aria-labelledby (referencing elements with non-empty text) take
+        // precedence over alt="", so check for valid ARIA accname before ignoring the image due to empty alt text.
 
-        // If an image has an accname, accessibility should be lenient and allow it to appear in the hierarchy (according to WAI-ARIA).
-        if (hasAccNameAttribute())
+        // Check if image has aria-label with non-empty content.
+        String ariaLabel = getAttribute(aria_labelAttr);
+        if (!ariaLabel.isEmpty() && !ariaLabel.containsOnly<isASCIIWhitespace>())
             return false;
+
+        // Check if image has aria-labelledby that references existing element(s) with text content.
+        const AtomString& ariaLabelledBy = getAttribute(aria_labelledbyAttr);
+        if (!ariaLabelledBy.isEmpty()) {
+            SpaceSplitString ids(ariaLabelledBy, SpaceSplitString::ShouldFoldCase::No);
+            if (RefPtr document = this->document()) {
+                for (auto& id : ids) {
+                    if (RefPtr element = document->getElementById(id)) {
+                        String elementText = element->textContent();
+                        if (!elementText.isEmpty() && !elementText.containsOnly<isASCIIWhitespace>())
+                            return false;
+                    }
+                }
+            }
+        }
+
+        if (altTextInclusion == AccessibilityObjectInclusion::IgnoreObject) {
+            // If the image is decorative (i.e. alt="") and has no valid ARIA accname, it should be ignored.
+            return true;
+        }
 
         if (image) {
             // check for one-dimensional image
