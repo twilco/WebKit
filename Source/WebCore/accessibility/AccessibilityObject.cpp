@@ -61,6 +61,7 @@
 #include "EventNames.h"
 #include "FloatRect.h"
 #include "FocusController.h"
+#include "FrameInlines.h"
 #include "FrameLoader.h"
 #include "FrameSelection.h"
 #include "GeometryUtilities.h"
@@ -3625,6 +3626,27 @@ bool AccessibilityObject::isOnScreen() const
         if (!outerRect.intersects(innerRect))
             return false;
     }
+
+#if ENABLE(ACCESSIBILITY_LOCAL_FRAME)
+    // The element is visible within its own frame. If this is a child frame,
+    // also check whether the hosting iframe element is visible in the parent frame.
+    if (CheckedPtr cache = axObjectCache()) {
+        RefPtr document = cache->document();
+        RefPtr frame = document ? document->frame() : nullptr;
+        if (RefPtr frameElement = frame && !frame->isMainFrame() ? frame->ownerElement() : nullptr) {
+            // Get the iframe/frame owner element directly rather than using
+            // crossFrameParentObject(), which may return an unignored ancestor
+            // (like WebArea) whose boundingBoxRect doesn't reflect the iframe's
+            // actual position.
+            CheckedPtr parentCache = frameElement->document().axObjectCache();
+            if (RefPtr frameAXObject = parentCache ? parentCache->get(*frameElement) : nullptr) {
+                if (!frameAXObject->isOnScreen())
+                    return false;
+            }
+        }
+    }
+#endif // ENABLE(ACCESSIBILITY_LOCAL_FRAME)
+
     return true;
 }
 
