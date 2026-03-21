@@ -158,6 +158,14 @@ void HTMLFormControlElement::finishParsingChildren()
 void HTMLFormControlElement::disabledStateChanged()
 {
     ValidatedFormListedElement::disabledStateChanged();
+
+    if (isDisabled()) {
+        if (document().focusedElement() == this) {
+            document().setFocusedElement(nullptr);
+            document().setFocusNavigationStartingNode(this);
+        }
+    }
+
     if (CheckedPtr renderer = this->renderer(); renderer && renderer->style().hasUsedAppearance())
         renderer->repaint();
 }

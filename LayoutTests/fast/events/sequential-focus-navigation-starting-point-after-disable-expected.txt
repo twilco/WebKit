@@ -1,0 +1,10 @@
+After disabling a focused element, sequential focus navigation should start at the element's position.
+PASS container.innerHTML = '<input id=prev><button id=start>Start</button><input id=next>'; focusStart(); disableStart(); moveFocus('forward'); document.activeElement.id is 'next'
+PASS container.innerHTML = '<input id=prev><button id=start>Start</button><input id=next>'; focusStart(); disableStart(); moveFocus('backward'); document.activeElement.id is 'prev'
+PASS container.innerHTML = '<input id=prev><input id=start><input id=next>'; focusStart(); disableStart(); moveFocus('forward'); document.activeElement.id is 'next'
+PASS container.innerHTML = '<input id=prev><select id=start><option>A</option></select><input id=next>'; focusStart(); disableStart(); moveFocus('forward'); document.activeElement.id is 'next'
+PASS container.innerHTML = '<input id=prev><textarea id=start></textarea><input id=next>'; focusStart(); disableStart(); moveFocus('forward'); document.activeElement.id is 'next'
+PASS successfullyParsed is true
+
+TEST COMPLETE
+

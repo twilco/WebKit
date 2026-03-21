@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<body onload="runTest();">
+<script src="../../resources/js-test.js"></script>
+<div id="log"></div>
+<div id="container"></div>
+<script>
+if (!window.eventSender)
+    document.body.textContent = 'This test requires window.eventSender.';
+
+function moveFocus(direction) {
+    eventSender.keyDown('\t', direction == 'forward' ? [] : ['shiftKey']);
+}
+
+function focusStart() {
+    container.querySelector('#start').focus();
+}
+
+function disableStart() {
+    container.querySelector('#start').disabled = true;
+}
+
+function runTest() {
+    debug("After disabling a focused element, sequential focus navigation should start at the element's position.");
+    var container = document.querySelector('#container');
+
+    shouldBe("container.innerHTML = '<input id=prev><button id=start>Start</button><input id=next>'; focusStart(); disableStart(); moveFocus('forward'); document.activeElement.id", "'next'");
+    shouldBe("container.innerHTML = '<input id=prev><button id=start>Start</button><input id=next>'; focusStart(); disableStart(); moveFocus('backward'); document.activeElement.id", "'prev'");
+    shouldBe("container.innerHTML = '<input id=prev><input id=start><input id=next>'; focusStart(); disableStart(); moveFocus('forward'); document.activeElement.id", "'next'");
+    shouldBe("container.innerHTML = '<input id=prev><select id=start><option>A</option></select><input id=next>'; focusStart(); disableStart(); moveFocus('forward'); document.activeElement.id", "'next'");
+    shouldBe("container.innerHTML = '<input id=prev><textarea id=start></textarea><input id=next>'; focusStart(); disableStart(); moveFocus('forward'); document.activeElement.id", "'next'");
+}
+</script>
+</body>
