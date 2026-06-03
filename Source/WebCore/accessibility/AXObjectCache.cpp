@@ -400,7 +400,10 @@ bool AXObjectCache::shouldServeInitialCachedFrame()
     return !clientIsInTestMode() || forceInitialFrameCaching();
 }
 
-static constexpr Seconds updateTreeSnapshotTimerInterval { 100_ms };
+// Just over one frame at 60Hz (16.67ms), with the intent being
+// that the accessibility timer fires shortly after the last
+// rendering update.
+static constexpr Seconds updateTreeSnapshotTimerInterval { 17_ms };
 #endif
 
 AXObjectCache::AXObjectCache(LocalFrame& localFrame, Document* document)
@@ -2704,7 +2707,6 @@ void AXObjectCache::onAccessibilityPaintFinished()
     }
 
     tree->markMostRecentlyPaintedTextDirty();
-    startUpdateTreeSnapshotTimer();
 }
 
 bool AXObjectCache::onFontChange(Element& element, const RenderStyle* oldStyle, const RenderStyle* newStyle)
@@ -3879,7 +3881,6 @@ void AXObjectCache::dirtyIsolatedTreeRelations()
 #if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
     if (RefPtr tree = AXIsolatedTree::treeForFrameID(m_frameID))
         tree->markRelationsDirty();
-    startUpdateTreeSnapshotTimer();
 #endif
 }
 
@@ -5847,7 +5848,7 @@ void AXObjectCache::updateIsolatedTree(AccessibilityObject& axObject, AXProperty
 void AXObjectCache::startUpdateTreeSnapshotTimer()
 {
     if (!m_updateTreeSnapshotTimer.isActive())
-        m_updateTreeSnapshotTimer.startOneShot(updateTreeSnapshotTimerInterval);
+        m_updateTreeSnapshotTimer.startRepeating(updateTreeSnapshotTimerInterval);
 }
 
 void AXObjectCache::onPaint(const RenderObject& renderer, IntRect&& paintRect) const
@@ -6743,12 +6744,6 @@ void AXObjectCache::selectedTextRangeTimerFired()
     }
 
     m_lastDebouncedTextRangeObject = std::nullopt;
-}
-
-void AXObjectCache::updateTreeSnapshotTimerFired()
-{
-    m_updateTreeSnapshotTimer.stop();
-    processQueuedIsolatedNodeUpdates();
 }
 
 void AXObjectCache::processQueuedIsolatedNodeUpdates()

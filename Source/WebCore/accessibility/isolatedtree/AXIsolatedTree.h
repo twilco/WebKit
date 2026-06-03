@@ -515,22 +515,26 @@ public:
         objectChangedIgnoredState(object);
     }
 
-    // Both setPendingRootNodeLocked and setFocusedNodeID are called during the generation
-    // of the IsolatedTree.
-    // Focused node updates in AXObjectCache use setFocusNodeID.
     void setPendingRootNodeID(AXID);
-    void NODELETE setPendingRootNodeIDLocked(AXID) WTF_REQUIRES_LOCK(m_changeLogLock);
     void setFocusedNodeID(std::optional<AXID>);
 
     // Relationships between objects.
     std::optional<ListHashSet<AXID>> relatedObjectIDsFor(const AXIsolatedObject&, AXRelation);
-    void markRelationsDirty() { m_relationsNeedUpdate = true; }
+    void markRelationsDirty()
+    {
+        m_relationsNeedUpdate = true;
+        m_hasQueuedNodeUpdates = true;
+    }
     void updateRelations(HashMap<AXID, AXRelations>&&);
 
     AXCoreObject::AccessibilityChildrenVector sortedLiveRegions();
     AXCoreObject::AccessibilityChildrenVector sortedNonRootWebAreas();
 
-    void markMostRecentlyPaintedTextDirty() { m_mostRecentlyPaintedTextIsDirty = true; }
+    void markMostRecentlyPaintedTextDirty()
+    {
+        m_mostRecentlyPaintedTextIsDirty = true;
+        m_hasQueuedNodeUpdates = true;
+    }
     const HashMap<AXID, LineRange>& mostRecentlyPaintedText() const LIFETIME_BOUND { return m_mostRecentlyPaintedText; }
 
     // Called on AX thread from WebAccessibilityObjectWrapper methods.
@@ -637,6 +641,14 @@ private:
 
     struct PendingChanges {
         Markable<AXID> focusedNodeID;
+        // True iff setFocusedNodeID was called this cycle. Distinguishes
+        // "not written" (preserve previous focus) from "explicitly cleared"
+        // (propagate the null Markable).
+        //
+        // Always update both fields via setFocusedNodeID(). Never assign
+        // focusedNodeID directly, or the flag will go stale.
+        bool didExplicitlySetFocusedNodeID { false };
+
         Markable<AXID> rootNodeID;
         Vector<NodeChange> appends;
         Vector<AXPropertyChange> propertyChanges;
@@ -653,43 +665,38 @@ private:
         std::optional<AXFrameGeometry> frameGeometry;
         std::optional<IntPoint> frameViewOriginScrollPosition;
 #endif
+
+        void setFocusedNodeID(std::optional<AXID> axID)
+        {
+            focusedNodeID = axID;
+            didExplicitlySetFocusedNodeID = true;
+        }
     };
 
-    class PendingChangesAccessor {
-        WTF_MAKE_NONCOPYABLE(PendingChangesAccessor);
-    public:
-        PendingChangesAccessor(PendingChanges& data, std::atomic<bool>& flagToSetOnCompletion)
-            : m_data(data), m_flagToSetOnCompletion(flagToSetOnCompletion) { }
-        ~PendingChangesAccessor()
-        {
-            // Don't create a PendingChangesAccessor without using it — the destructor
-            // unconditionally sets m_hasPendingChanges, so unused accessors cause
-            // false-positive dirty flags.
-            AX_ASSERT(m_wasAccessed);
-            m_flagToSetOnCompletion.store(true);
-        }
-        PendingChanges* operator->()
-        {
-#if ASSERT_ENABLED
-            m_wasAccessed = true;
-#endif
-            return &m_data;
-        }
-    private:
-        PendingChanges& m_data;
-        std::atomic<bool>& m_flagToSetOnCompletion;
-#if ASSERT_ENABLED
-        bool m_wasAccessed { false };
-#endif
-    };
-
-    PendingChangesAccessor mutablePendingChanges() WTF_REQUIRES_LOCK(m_changeLogLock)
+    // Returns a direct reference to m_workingChanges, the main-thread-only
+    // buffer that accumulates writes between AX thread handoff points. Calling
+    // the accessor sets the dirty flag as a side-effect, so only call it when
+    // you actually intend to write to the buffer.
+    PendingChanges& mutableWorkingChanges()
     {
-        return { m_pendingChanges, m_hasPendingChanges };
+        AX_ASSERT(isMainThread());
+        m_workingChangesDirty = true;
+        // Any change to m_workingChanges is going to need processing
+        // in processQueuedNodeUpdates(), so set this flag too.
+        m_hasQueuedNodeUpdates = true;
+        return m_workingChanges;
     }
 
-    PendingChanges takePendingChangesLocked() WTF_REQUIRES_LOCK(m_changeLogLock);
-    void applyPendingChangesFromSnapshot(PendingChanges&&);
+    // Atomically publishes m_workingChanges into m_committedChanges so the AX
+    // thread sees a single logical work-cycle as an indivisible state change.
+    void commitWorkingChanges();
+
+    // Merges source's per-field state into destination using field-specific
+    // semantics derived from how applyCommittedChanges consumes each field.
+    static void mergeInto(PendingChanges& destination, PendingChanges&& source);
+
+    PendingChanges takeCommittedChangesLocked() WTF_REQUIRES_LOCK(m_changeLogLock);
+    void applyCommittedChanges(PendingChanges&&);
     void removeStaleAppends(const Vector<NodeAndParentID>&, Vector<NodeChange>&);
 
     void updateChildren(AccessibilityObject&, ResolveNodeChanges = ResolveNodeChanges::Yes);
@@ -699,9 +706,8 @@ private:
     std::optional<NodeChange> nodeChangeForObject(Ref<AccessibilityObject>);
     void collectNodeChangesForSubtree(AccessibilityObject&);
     bool isCollectingNodeChanges() const { return m_isCollectingNodeChanges; }
-    void queueChange(NodeChange&&) WTF_REQUIRES_LOCK(m_changeLogLock);
+    void queueChange(NodeChange&&);
     void queueRemovals(Vector<NodeAndParentID>&&);
-    void queueRemovalsLocked(Vector<NodeAndParentID>&&) WTF_REQUIRES_LOCK(m_changeLogLock);
     void queueRemovalsAndUnresolvedChanges();
     Vector<NodeChange> resolveAppends();
     void queueAppendsAndRemovals(Vector<NodeChange>&&, Vector<NodeAndParentID>&&);
@@ -752,9 +758,20 @@ private:
     RefPtr<AXIsolatedObject> m_rootNode;
 
     // Written to by main thread under lock, accessed and applied by AX thread.
-    PendingChanges m_pendingChanges WTF_GUARDED_BY_LOCK(m_changeLogLock);
+    PendingChanges m_committedChanges WTF_GUARDED_BY_LOCK(m_changeLogLock);
 
-    // These are placed here to fit in padding that would otherwise be between m_pendingSortedLiveRegionIDs and m_pendingSortedNonRootWebAreaIDs.
+    // Main-thread-only buffer that accumulates writes between commit points.
+    // commitWorkingChanges() merges it into m_committedChanges under lock.
+    PendingChanges m_workingChanges;
+    bool m_workingChangesDirty { false };
+
+    // Set to true whenever any work is queued (working buffer write, deferred
+    // node-update queues, relation/painted-text dirty marks). Checked at the
+    // top of processQueuedNodeUpdates so the periodic snapshot timer can early
+    // out cheaply when there is nothing to do.
+    bool m_hasQueuedNodeUpdates { false };
+
+    // These small members are grouped here to fit into padding gaps in the layout.
     OptionSet<ActivityState> m_pageActivityState;
     bool m_isEmptyContentTree { false };
     bool m_queuedForDestruction WTF_GUARDED_BY_LOCK(m_changeLogLock) { false };
@@ -766,7 +783,7 @@ private:
     std::atomic<double> m_processingProgress { 1 };
     std::atomic<bool> m_hasPendingChanges { false };
 #if ENABLE(ACCESSIBILITY_THREAD_DISPATCHING)
-    std::atomic<bool> m_appliedOrApplyingMainThreadSnapshot { true };
+    std::atomic<bool> m_appliedOrApplyingCommittedChanges { true };
 #endif
 
     // Only accessed on the accessibility thread.
@@ -775,9 +792,9 @@ private:
     HashMap<AXID, LineRange> m_mostRecentlyPaintedText;
     HashMap<AXID, AXRelations> m_relations;
     // Cache of unignoredChildren() results for AXIsolatedObjects. Populated lazily
-    // on cache miss; cleared in applyPendingChangesFromSnapshot when the incoming snapshot
-    // carries a change that could affect any unignored-children list (tree structure change,
-    // or IsIgnored / IsExposableTable / StitchGroups property update).
+    // on cache miss; cleared in applyCommittedChanges when the incoming committed
+    // changes carry a change that could affect any unignored-children list (tree
+    // structure change, or IsIgnored / IsExposableTable / StitchGroups property update).
     HashMap<AXID, CachedUnignoredChildren> m_cachedUnignoredChildren;
 #if ENABLE(ACCESSIBILITY_LOCAL_FRAME)
     AXFrameGeometry m_frameGeometry;
