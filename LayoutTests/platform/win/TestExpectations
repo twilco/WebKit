@@ -1047,7 +1047,6 @@ http/wpt/fetch/response-status-text.html [ Failure Slow ]
 
 http/tests/lists/list-new-parent-no-sibling-append.html [ Failure ]
 
-http/tests/misc/ftp-eplf-directory.py [ Skip ]
 
 http/wpt/fetch/fetch-metadata-websocket.html [ Failure ]
 

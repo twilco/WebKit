@@ -3023,17 +3023,6 @@ ExtensibleSSOEnabled:
     WebKit:
       default: true
 
-FTPDirectoryTemplatePath:
-  type: String
-  status: embedder
-  defaultValue:
-    WebKitLegacy:
-      default: '""_str'
-    WebKit:
-      default: '""_str'
-    WebCore:
-      default: '""_str'
-
 FTPEnabled:
   type: bool
   status: developer
@@ -3239,17 +3228,6 @@ ForceEnhancedSecurity:
   humanReadableDescription: "Force all navigations to use Enhanced Security"
   webcoreBinding: none
   exposed: [ WebKit ]
-  defaultValue:
-    WebKitLegacy:
-      default: false
-    WebKit:
-      default: false
-    WebCore:
-      default: false
-
-ForceFTPDirectoryListings:
-  type: bool
-  status: embedder
   defaultValue:
     WebKitLegacy:
       default: false
