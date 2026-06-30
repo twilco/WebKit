@@ -3,7 +3,7 @@
  *           (C) 1999 Antti Koivisto (koivisto@kde.org)
  *           (C) 2005 Allan Sandfeld Jensen (kde@carewolf.com)
  * Copyright (C) 2005-2026 Samuel Weinig (sam@webkit.org)
- * Copyright (C) 2005-2025 Apple Inc. All rights reserved.
+ * Copyright (C) 2005-2026 Apple Inc. All rights reserved.
  * Copyright (C) 2010-2018 Google Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or
@@ -128,9 +128,8 @@ WTF_MAKE_TZONE_ALLOCATED_IMPL(RenderElement);
 
 struct SameSizeAsRenderElement : public RenderObject {
     SingleThreadPackedWeakPtr<RenderObject> firstChild;
-    unsigned bitfields1 : 12;
     SingleThreadPackedWeakPtr<RenderObject> lastChild;
-    unsigned bitfields2 : 13;
+    unsigned bitfields : 21;
     Style::ComputedStyle style;
 };
 
@@ -144,21 +143,7 @@ static_assert(sizeof(RenderElement) == sizeof(SameSizeAsRenderElement), "RenderE
 inline RenderElement::RenderElement(Type type, ContainerNode& elementOrDocument, Style::ComputedStyle&& style, OptionSet<TypeFlag> flags, TypeSpecificFlags typeSpecificFlags)
     : RenderObject(type, elementOrDocument, flags, typeSpecificFlags)
     , m_firstChild(nullptr)
-    , m_hasInitializedStyle(false)
-    , m_hasPausedImageAnimations(false)
-    , m_hasCounterNodeMap(false)
-#if HAVE(SUPPORT_HDR_DISPLAY)
-    , m_hasHDRImages(false)
-#endif
-    , m_isFirstLetter(false)
-    , m_renderBlockHasMarginBeforeQuirk(false)
-    , m_renderBlockHasMarginAfterQuirk(false)
-    , m_renderBlockShouldForceRelayoutChildren(false)
-    , m_renderBlockFlowLineLayoutPath(RenderBlockFlow::UndeterminedPath)
     , m_lastChild(nullptr)
-    , m_isRegisteredForVisibleInViewportCallback(false)
-    , m_visibleInViewportState(static_cast<unsigned>(VisibleInViewportState::Unknown))
-    , m_didContributeToVisuallyNonEmptyPixelCount(false)
     , m_style(WTF::move(style))
 {
     ASSERT(RenderObject::isRenderElement());
