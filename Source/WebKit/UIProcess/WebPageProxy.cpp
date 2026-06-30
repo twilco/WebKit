@@ -2874,10 +2874,28 @@ RefPtr<API::Navigation> WebPageProxy::goToBackForwardItem(WebBackForwardListFram
     return RefPtr<API::Navigation> { WTF::move(navigation) };
 }
 
+// The HTML spec replaces an iframe's initial about:blank entry on the frame's first real
+// navigation; WebKit's BF list keeps the stale state in older entries, so dispatching a
+// traversal into one would regress the live iframe. The target entry is identified by the
+// authoritative isInitialAboutBlank flag (set from DocumentLoader::isInitialAboutBlank when the
+// history item is created), not by a URL-string match, so an intentional iframe.src="about:blank"
+// navigation — which is not the initial empty document — is correctly dispatched.
+static bool isStaleInitialAboutBlankIframeTarget(WebBackForwardListFrameItem& toFrame)
+{
+    if (!toFrame.frameState().isInitialAboutBlank)
+        return false;
+    auto toFrameID = toFrame.frameID();
+    if (!toFrameID)
+        return false;
+    RefPtr toLiveFrame = WebFrameProxy::webFrame(*toFrameID);
+    return toLiveFrame && !toLiveFrame->isMainFrame();
+}
+
 bool WebPageProxy::dispatchPerFrameTraversals(WebBackForwardListFrameItem& fromFrame, WebBackForwardListFrameItem& toFrame, NavigationIdentifier navigationID, FrameLoadType frameLoadType, ShouldRestoreFromBackForwardCache shouldRestore, const WebCore::PublicSuffix& publicSuffix)
 {
     bool anySent = false;
-    if (fromFrame.frameState().itemSequenceNumber != toFrame.frameState().itemSequenceNumber)
+    if (fromFrame.frameState().itemSequenceNumber != toFrame.frameState().itemSequenceNumber
+        && !isStaleInitialAboutBlankIframeTarget(toFrame))
         anySent = sendGoToBackForwardItemForFrame(toFrame, navigationID, frameLoadType, shouldRestore, publicSuffix);
 
     bool sameDocument = fromFrame.frameState().documentSequenceNumber == toFrame.frameState().documentSequenceNumber;
