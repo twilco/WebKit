@@ -1539,6 +1539,12 @@ void NetworkResourceLoader::continueWillSendRequest(ResourceRequest&& newRequest
 {
     LOADER_RELEASE_LOG("continueWillSendRequest: (isAllowedToAskUserForCredentials=%d)", isAllowedToAskUserForCredentials);
 
+    // If there is a match in the network cache, we need to reuse the original cache policy and partition.
+    // This must happen before any branch below that may store a redirect in the disk cache, otherwise a
+    // compromised WebContent process could poison the cache for an arbitrary partition.
+    newRequest.setCachePolicy(originalRequest().cachePolicy());
+    newRequest.setShouldBlockThirdPartyStorage(originalRequest().shouldBlockThirdPartyStorage());
+
     if (m_redirectionForCurrentNavigation) {
         LOADER_RELEASE_LOG("continueWillSendRequest: using stored redirect response");
         auto redirection = std::exchange(m_redirectionForCurrentNavigation, { });
@@ -1599,10 +1605,6 @@ void NetworkResourceLoader::continueWillSendRequest(ResourceRequest&& newRequest
     }
 
     m_isAllowedToAskUserForCredentials = isAllowedToAskUserForCredentials;
-
-    // If there is a match in the network cache, we need to reuse the original cache policy and partition.
-    newRequest.setCachePolicy(originalRequest().cachePolicy());
-    newRequest.setShouldBlockThirdPartyStorage(originalRequest().shouldBlockThirdPartyStorage());
 
     if (m_isWaitingContinueWillSendRequestForCachedRedirect) {
         m_isWaitingContinueWillSendRequestForCachedRedirect = false;
