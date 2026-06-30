@@ -693,6 +693,9 @@ WebPage::WebPage(PageIdentifier pageID, WebPageCreationParameters&& parameters)
 #endif
 #if PLATFORM(MAC)
     , m_overflowHeightForTopScrollEdgeEffect(parameters.overflowHeightForTopScrollEdgeEffect)
+#if ENABLE(SCROLL_POCKET_IN_FULLSCREEN)
+    , m_fullScreenTitlebarOverlayIsDisplayed(parameters.fullScreenTitlebarOverlayIsDisplayed)
+#endif
 #endif
 #if ENABLE(META_VIEWPORT)
     , m_forceAlwaysUserScalable(parameters.ignoresViewportScaleLimits)

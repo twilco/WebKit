@@ -2196,6 +2196,9 @@ public:
 
 #if PLATFORM(MAC)
     void setOverflowHeightForTopScrollEdgeEffect(double value) { m_overflowHeightForTopScrollEdgeEffect = value; }
+#if ENABLE(SCROLL_POCKET_IN_FULLSCREEN)
+    void setFullScreenTitlebarOverlayIsDisplayed(bool fullScreenTitlebarOverlayIsDisplayed) { m_fullScreenTitlebarOverlayIsDisplayed = fullScreenTitlebarOverlayIsDisplayed; }
+#endif
 #endif
 
     RefPtr<WebCore::ShareableBitmap> shareableBitmapSnapshotForNode(WebCore::Node&);
@@ -3090,12 +3093,14 @@ private:
 
 #if PLATFORM(MAC)
     double m_overflowHeightForTopScrollEdgeEffect { 0 };
-
     // Root-view origin of the in-flight selection-extend drag: captured on the first extent update and
     // cleared by `cancelAutoscroll` (which the UI process calls at gesture begin/end). Lets the edge check
     // require a minimum drag toward an edge before selection autoscroll engages, so a selection that merely
     // originates near an edge doesn't scroll. Persists across hot-zone enter/exit within a single drag.
     std::optional<WebCore::IntPoint> m_selectionAutoscrollDragOrigin;
+#if ENABLE(SCROLL_POCKET_IN_FULLSCREEN)
+    bool m_fullScreenTitlebarOverlayIsDisplayed { false };
+#endif
 #endif
 
     bool m_needsScrollGeometryUpdates { false };

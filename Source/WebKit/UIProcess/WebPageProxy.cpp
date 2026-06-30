@@ -13841,6 +13841,9 @@ WebPageCreationParameters WebPageProxy::creationParameters(WebProcessProxy& proc
     if (m_viewWindowCoordinates)
         parameters.viewWindowCoordinates = *m_viewWindowCoordinates;
     parameters.overflowHeightForTopScrollEdgeEffect = m_overflowHeightForTopScrollEdgeEffect;
+#if ENABLE(SCROLL_POCKET_IN_FULLSCREEN)
+    parameters.fullScreenTitlebarOverlayIsDisplayed = fullScreenTitlebarOverlayIsDisplayed();
+#endif
 #if HAVE(NSVIEW_CORNER_CONFIGURATION)
     parameters.scrollbarAvoidanceCornerRadii = internals().scrollbarAvoidanceCornerRadii;
 #endif

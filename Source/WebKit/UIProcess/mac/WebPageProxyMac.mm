@@ -479,6 +479,37 @@ void WebPageProxy::setOverflowHeightForTopScrollEdgeEffect(double value)
     protect(legacyMainFrameProcess())->send(Messages::WebPage::SetOverflowHeightForTopScrollEdgeEffect(value), webPageIDInMainFrameProcess());
 }
 
+#if ENABLE(SCROLL_POCKET_IN_FULLSCREEN)
+
+void WebPageProxy::setWindowIsInNativeFullScreen(WindowIsInNativeFullScreen windowIsInNativeFullScreen)
+{
+    auto isInFullScreen = windowIsInNativeFullScreen == WindowIsInNativeFullScreen::Yes;
+    if (m_windowIsInNativeFullScreen == isInFullScreen)
+        return;
+
+    m_windowIsInNativeFullScreen = isInFullScreen;
+
+    if (!hasRunningProcess())
+        return;
+
+    protect(legacyMainFrameProcess())->send(Messages::WebPage::SetFullScreenTitlebarOverlayIsDisplayed(fullScreenTitlebarOverlayIsDisplayed()), webPageIDInMainFrameProcess());
+}
+
+void WebPageProxy::setFullScreenTitlebarOverlayIsRevealed(bool fullScreenTitlebarOverlayIsRevealed)
+{
+    if (m_fullScreenTitlebarOverlayIsRevealed == fullScreenTitlebarOverlayIsRevealed)
+        return;
+
+    m_fullScreenTitlebarOverlayIsRevealed = fullScreenTitlebarOverlayIsRevealed;
+
+    if (!hasRunningProcess())
+        return;
+
+    protect(legacyMainFrameProcess())->send(Messages::WebPage::SetFullScreenTitlebarOverlayIsDisplayed(fullScreenTitlebarOverlayIsDisplayed()), webPageIDInMainFrameProcess());
+}
+
+#endif
+
 void WebPageProxy::setObscuredContentInsetsAsync(const FloatBoxExtent& obscuredContentInsets)
 {
     m_internals->pendingObscuredContentInsets = obscuredContentInsets;
