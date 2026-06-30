@@ -1066,8 +1066,6 @@ struct WebCore::ClientOrigin {
 
 enum class WebCore::AdjustViewSize : bool;
 
-enum class WebCore::UseLosslessCompression : bool;
-
 [RefCounted] class WebCore::TextIndicator {
     WebCore::TextIndicatorData data();
 };
