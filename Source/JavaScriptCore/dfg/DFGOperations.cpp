@@ -866,9 +866,9 @@ ALWAYS_INLINE EncodedJSValue getByValArrayStorageInt(JSGlobalObject* globalObjec
             } else if (map) {
                 SparseArrayValueMap::iterator it = map->find(i);
                 if (it != map->notFound()) {
-                    if (it->value.attributes()) [[unlikely]] // accessor / special: needs the full slot path.
+                    if (it->attributes()) [[unlikely]] // accessor / special: needs the full slot path.
                         return JSValue::encode(JSValue(base).get(globalObject, i));
-                    return JSValue::encode(it->value.getNonSparseMode());
+                    return JSValue::encode(it->getNonSparseMode());
                 }
             }
 
