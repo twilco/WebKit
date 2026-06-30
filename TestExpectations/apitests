@@ -335,3 +335,11 @@ webkit.org/b/317783 [ ios ] TestWebKitAPI.SiteIsolation.FindStringSelectionSameO
 webkit.org/b/317891 [ ios ] TestWebKitAPI.WebAuthenticationPanel.GetAssertionPinProtocol2 [ Skip ]
 
 webkit.org/b/318155 [ ios ] TestWebKitAPI.PasteHTML.DoesNotTransformColorsOfLightContent [ Skip ]
+
+webkit.org/b/318267 [ ios ] TestWebKitAPI.WebAuthenticationPanel.NoPanelHidSuccess [ Skip ]
+webkit.org/b/318267 [ ios ] TestWebKitAPI.WebAuthenticationPanel.MultipleAccounts [ Skip ]
+webkit.org/b/318267 [ ios ] TestWebKitAPI.WebAuthenticationPanel.PanelHidCtapNoCredentialsFoundCancelNoCrash [ Skip ]
+webkit.org/b/318267 [ ios ] TestWebKitAPI.WebAuthenticationPanel.PanelTwice [ Skip ]
+webkit.org/b/318267 [ ios ] TestWebKitAPI.WebAuthenticationPanel.GetAssertionPinInvalidErrorAndRetry [ Skip ]
+webkit.org/b/318267 [ ios ] TestWebKitAPI.WebAuthenticationPanel.NullPanelHidSuccess [ Skip ]
+webkit.org/b/318267 [ ios ] TestWebKitAPI.WebAuthenticationPanel.GetAssertionInternalUVPinFallback [ Skip ]
