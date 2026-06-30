@@ -506,7 +506,7 @@ bool preferredSizeBehavesAsAuto(const Style::PreferredSize& preferredSize)
 
 bool preferredSizeDependsOnContainingBlockSize(const Style::PreferredSize& preferredSize)
 {
-    return preferredSize.isStretch() || preferredSize.isFitContent() || preferredSize.isPercentOrCalculated();
+    return preferredSize.isStretch() || preferredSize.isPercentOrCalculated();
 }
 
 }
