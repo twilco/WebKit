@@ -3818,6 +3818,7 @@ enum class WebCore::ShouldRestoreFromBackForwardCache : uint8_t {
 enum class WebCore::RestoredFromBackForwardCache : bool
 
 enum class WebCore::WillInternallyHandleFailure : bool
+enum class WebCore::IsInitialAboutBlank : bool
 enum class WebCore::ShouldSample : bool
 enum class WebCore::FromDownloadAttribute : bool
 enum class WebCore::RequiresScriptTrackingPrivacy : bool
