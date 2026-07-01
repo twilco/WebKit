@@ -403,7 +403,6 @@ bool NetworkResourceLoader::isLocalFileLoadAllowedWithoutSandboxExtension(const 
 
 void NetworkResourceLoader::startNetworkLoad(ResourceRequest&& request, FirstLoad load)
 {
-    if (load == FirstLoad::Yes) {
 #if ENABLE(BLOCKING_OF_LOCAL_FILE_LOADS_WITHOUT_SANDBOX_EXTENSION)
         if (request.url().protocolIsFile() && !m_parameters.resourceSandboxExtension.has_value() && !isLocalFileLoadAllowedWithoutSandboxExtension(request.url())) {
             LOADER_RELEASE_LOG("startNetworkLoad: stop local file load because a sandbox extension is not provided");
@@ -411,6 +410,8 @@ void NetworkResourceLoader::startNetworkLoad(ResourceRequest&& request, FirstLoa
             return;
         }
 #endif // ENABLE(BLOCKING_OF_LOCAL_FILE_LOADS_WITHOUT_SANDBOX_EXTENSION)
+
+    if (load == FirstLoad::Yes) {
         consumeSandboxExtensions();
 
         if (isSynchronous() || m_parameters.maximumBufferingTime > 0_s)
