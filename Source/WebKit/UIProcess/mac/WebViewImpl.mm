@@ -1504,6 +1504,8 @@ void WebViewImpl::handleProcessSwapOrExit()
 #if HAVE(APPKIT_GESTURES_SUPPORT)
     [m_appKitGestureController reset];
 #endif
+
+    m_contentRelativeViewsNeedToBeRepositioned = false;
 }
 
 void WebViewImpl::processWillSwap()
@@ -3862,7 +3864,7 @@ bool WebViewImpl::hasContentRelativeChildViews() const
 
 void WebViewImpl::suppressContentRelativeChildViews(ContentRelativeChildViewsSuppressionType type)
 {
-    if (!hasContentRelativeChildViews())
+    if (!hasContentRelativeChildViews() && !inputContextForSelectionUpdates())
         return;
 
     switch (type) {
@@ -3879,13 +3881,16 @@ void WebViewImpl::suppressContentRelativeChildViews(ContentRelativeChildViewsSup
 
 void WebViewImpl::contentRelativeViewsHysteresisTimerFired(PAL::HysteresisState state)
 {
-    if (!hasContentRelativeChildViews())
-        return;
+    bool started = state == PAL::HysteresisState::Started;
+    if (hasContentRelativeChildViews()) {
+        if (started)
+            suppressContentRelativeChildViews();
+        else
+            restoreContentRelativeChildViews();
+    }
 
-    if (state == PAL::HysteresisState::Started)
-        suppressContentRelativeChildViews();
-    else
-        restoreContentRelativeChildViews();
+    if (m_contentRelativeViewsNeedToBeRepositioned != started && std::exchange(m_contentRelativeViewsNeedToBeRepositioned, started))
+        [inputContextForSelectionUpdates() textInputClientDidUpdateSelection];
 }
 
 void WebViewImpl::pageScrollingHysteresisFired(PAL::HysteresisState state)
