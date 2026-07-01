@@ -42,7 +42,7 @@ GridItemSizingFunctions GridItemSizingFunctions::inlineAxis(const IntegrationUti
         },
         [&integrationUtils](const PlacedGridItem& gridItem, const TrackSizingFunctionsList& trackSizingFunctions, LayoutUnit borderAndPadding, LayoutUnit availableSpace, LayoutUnit oppositeAxisConstraint) {
             UNUSED_PARAM(oppositeAxisConstraint);
-            return GridLayoutUtils::usedInlineMinimumSize(gridItem, trackSizingFunctions, borderAndPadding, availableSpace, integrationUtils);
+            return GridLayoutUtils::inlineMinimumSize(gridItem, trackSizingFunctions, borderAndPadding, availableSpace, integrationUtils);
         }
     };
 }
@@ -57,7 +57,7 @@ GridItemSizingFunctions GridItemSizingFunctions::blockAxis(const GridFormattingC
             return GridLayoutUtils::blockAxisMaxContentContribution(gridItem, inlineAxisConstraint, formattingContext);
         },
         [&formattingContext](const PlacedGridItem& gridItem, const TrackSizingFunctionsList& trackSizingFunctions, LayoutUnit borderAndPadding, LayoutUnit availableSpace, LayoutUnit oppositeAxisConstraint) {
-            return GridLayoutUtils::usedBlockMinimumSize(gridItem, trackSizingFunctions, borderAndPadding, availableSpace, formattingContext, oppositeAxisConstraint);
+            return GridLayoutUtils::blockMinimumSize(gridItem, trackSizingFunctions, borderAndPadding, availableSpace, formattingContext, oppositeAxisConstraint);
         }
     };
 }
