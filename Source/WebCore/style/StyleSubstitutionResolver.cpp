@@ -123,37 +123,6 @@ SubstitutionResolver::SubstitutionResolver(Builder& builder, const CSSRegistered
 {
 }
 
-auto SubstitutionResolver::substituteVariableFallback(const AtomString& variableName, CSSParserTokenRange range, CSSValueID functionId, const CSSParserContext& context) -> std::pair<FallbackResult, Vector<CSSParserToken>> {
-    if (!range.atEnd() && range.peek().type() != CommaToken)
-        return { FallbackResult::Invalid, { } };
-
-    if (range.atEnd())
-        return { FallbackResult::None, { } };
-
-    range.consumeIncludingWhitespace();
-    range.trimTrailingWhitespace();
-
-    auto tokens = substituteTokenRange(range, context);
-
-    if (functionId == CSSValueVar) {
-        auto* registered = m_styleBuilder.state().registeredProperty(variableName);
-        if (registered && !registered->syntax.isUniversal()) {
-            // https://drafts.css-houdini.org/css-properties-values-api/#fallbacks-in-var-references
-            // The fallback value must match the syntax definition of the custom property being referenced,
-            // otherwise the declaration is invalid at computed-value time
-            if (!tokens || !CSSPropertyParser::isValidCustomPropertyValueForSyntax(registered->syntax, *tokens, context))
-                return { FallbackResult::Invalid, { } };
-
-            return { FallbackResult::Valid, WTF::move(*tokens) };
-        }
-    }
-
-    if (!tokens)
-        return { FallbackResult::None, { } };
-
-    return { FallbackResult::Valid, WTF::move(*tokens) };
-}
-
 RefPtr<const CustomProperty> SubstitutionResolver::propertyValueForVariableName(const AtomString& variableName, CSSValueID functionId)
 {
     if (functionId == CSSValueEnv)
@@ -178,33 +147,50 @@ bool SubstitutionResolver::substituteVariableFunction(CSSParserTokenRange range,
         return false;
     auto variableName = range.consumeIncludingWhitespace().value().toAtomString();
 
-    // Fallback has to be resolved even when not used to detect cycles and invalid syntax.
-    auto [fallbackResult, fallbackTokens] = substituteVariableFallback(variableName, range, functionId, context);
-    if (fallbackResult == FallbackResult::Invalid)
-        return false;
+    // Substitute the optional `, <fallback>` only when the referenced value is guaranteed-invalid.
+    // https://drafts.csswg.org/css-variables-2/#replace-a-var-function
+    std::optional<CSSParserTokenRange> fallbackRange;
+    if (!range.atEnd()) {
+        if (range.peek().type() != CommaToken)
+            return false;
+        range.consumeIncludingWhitespace();
+        range.trimTrailingWhitespace();
+        fallbackRange = range;
+    }
 
     RefPtr property = propertyValueForVariableName(variableName, functionId);
 
-    if (!property || property->isGuaranteedInvalid()) {
-        if (fallbackTokens.size() > maxSubstitutionTokens)
+    if (property && !property->isGuaranteedInvalid()) {
+        if (property->tokens().size() > maxSubstitutionTokens)
             return false;
 
-        if (fallbackResult == FallbackResult::Valid) {
-            tokens.appendVector(fallbackTokens);
-            return true;
-        }
-        return false;
+        // https://drafts.csswg.org/css-values-5/#attr-security
+        // Propagate attr()-taint through var() references.
+        propagateAttrTaint(property->isAttrTainted(), property->tokens());
+
+        tokens.appendVector(property->tokens());
+        return true;
     }
 
-    if (property->tokens().size() > maxSubstitutionTokens)
-        return false;
+    if (fallbackRange) {
+        auto fallbackTokens = substituteTokenRange(*fallbackRange, context);
+        if (!fallbackTokens || fallbackTokens->size() > maxSubstitutionTokens)
+            return false;
 
-    // https://drafts.csswg.org/css-values-5/#attr-security
-    // Propagate attr()-taint through var() references.
-    propagateAttrTaint(property->isAttrTainted(), property->tokens());
+        if (functionId == CSSValueVar) {
+            auto* registered = m_styleBuilder.state().registeredProperty(variableName);
+            // https://drafts.css-houdini.org/css-properties-values-api/#fallbacks-in-var-references
+            // A used fallback must match the referenced registered property's syntax.
+            if (registered && !registered->syntax.isUniversal()
+                && !CSSPropertyParser::isValidCustomPropertyValueForSyntax(registered->syntax, *fallbackTokens, context))
+                return false;
+        }
 
-    tokens.appendVector(property->tokens());
-    return true;
+        tokens.appendVector(*fallbackTokens);
+        return true;
+    }
+
+    return false;
 }
 
 // https://drafts.csswg.org/css-values-5/#first-valid
