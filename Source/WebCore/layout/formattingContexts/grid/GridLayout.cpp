@@ -452,7 +452,7 @@ TrackSizes GridLayout::sizeColumnTracks(const PlacedGridItems& placedGridItems, 
     });
 
     return TrackSizingAlgorithm::sizeTracks(columnTrackSizingItems, columnTrackSizingFunctionsList,
-        layoutConstraints.inlineAxis, GridLayoutUtils::inlineAxisGridItemSizingFunctions(formattingContext().integrationUtils()),
+        layoutConstraints.inlineAxis, GridItemSizingFunctions::inlineAxis(formattingContext().integrationUtils()),
         layoutState.usedColumnGap, layoutState.usedJustifyContent);
 }
 
@@ -472,7 +472,7 @@ TrackSizes GridLayout::sizeRowTracks(const PlacedGridItems& placedGridItems, con
     });
 
     return TrackSizingAlgorithm::sizeTracks(rowTrackSizingItems, rowTrackSizingFunctionsList,
-        layoutConstraints.blockAxis, GridLayoutUtils::blockAxisGridItemSizingFunctions(formattingContext()),
+        layoutConstraints.blockAxis, GridItemSizingFunctions::blockAxis(formattingContext()),
         layoutState.usedRowGap, layoutState.usedAlignContent);
 }
 

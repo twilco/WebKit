@@ -446,23 +446,6 @@ LayoutUnit inlineAxisMaxContentContribution(const PlacedGridItem& gridItem, Layo
     return BorderBoxSize::fromIntegrationFunction(integrationUtils.maxContentLogicalWidthContribution(gridItem.layoutBox())).value;
 }
 
-GridItemSizingFunctions inlineAxisGridItemSizingFunctions(const IntegrationUtils& integrationUtils)
-{
-    return {
-        [&integrationUtils](const PlacedGridItem& gridItem, LayoutUnit blockAxisConstraint) {
-            return inlineAxisMinContentContribution(gridItem, blockAxisConstraint, integrationUtils);
-        },
-        [&integrationUtils](const PlacedGridItem& gridItem, LayoutUnit blockAxisConstraint) {
-            return inlineAxisMaxContentContribution(gridItem, blockAxisConstraint, integrationUtils);
-        },
-        [&integrationUtils](const PlacedGridItem& gridItem, const TrackSizingFunctionsList& trackSizingFunctions, LayoutUnit borderAndPadding, LayoutUnit availableSpace, LayoutUnit oppositeAxisConstraint) {
-            UNUSED_PARAM(oppositeAxisConstraint);
-            return usedInlineMinimumSize(gridItem, trackSizingFunctions, borderAndPadding, availableSpace, integrationUtils);
-        }
-    };
-
-}
-
 // FIXME: this should be marginBoxHeight().
 LayoutUnit blockAxisMinContentContribution(const PlacedGridItem& gridItem, LayoutUnit inlineAxisConstraint, const GridFormattingContext& formattingContext)
 {
@@ -475,21 +458,6 @@ LayoutUnit blockAxisMaxContentContribution(const PlacedGridItem& gridItem, Layou
 {
     formattingContext.integrationUtils().layoutWithFormattingContextForBox(gridItem.layoutBox(), inlineAxisConstraint);
     return BorderBoxSize::fromIntegrationFunction(formattingContext.geometryForGridItem(gridItem.layoutBox()).borderBoxHeight()).value;
-}
-
-GridItemSizingFunctions blockAxisGridItemSizingFunctions(const GridFormattingContext& formattingContext)
-{
-    return {
-        [&formattingContext](const PlacedGridItem& gridItem, LayoutUnit inlineAxisConstraint) {
-            return blockAxisMinContentContribution(gridItem, inlineAxisConstraint, formattingContext);
-        },
-        [&formattingContext](const PlacedGridItem& gridItem, LayoutUnit inlineAxisConstraint) {
-            return blockAxisMaxContentContribution(gridItem, inlineAxisConstraint, formattingContext);
-        },
-        [&formattingContext](const PlacedGridItem& gridItem, const TrackSizingFunctionsList& trackSizingFunctions, LayoutUnit borderAndPadding, LayoutUnit availableSpace, LayoutUnit oppositeAxisConstraint) {
-            return usedBlockMinimumSize(gridItem, trackSizingFunctions, borderAndPadding, availableSpace, formattingContext, oppositeAxisConstraint);
-        }
-    };
 }
 
 // https://www.w3.org/TR/css-sizing-3/#behave-as-auto

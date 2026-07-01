@@ -39,7 +39,6 @@ namespace Layout {
 class GridFormattingContext;
 class IntegrationUtils;
 class PlacedGridItem;
-struct GridItemSizingFunctions;
 
 namespace GridLayoutUtils {
 
@@ -58,11 +57,9 @@ LayoutUnit gridAreaDimensionSize(size_t startLine, size_t endLine, const TrackSi
 
 LayoutUnit inlineAxisMinContentContribution(const PlacedGridItem&, LayoutUnit blockAxisConstraint, const IntegrationUtils&);
 LayoutUnit inlineAxisMaxContentContribution(const PlacedGridItem&, LayoutUnit blockAxisConstraint, const IntegrationUtils&);
-GridItemSizingFunctions inlineAxisGridItemSizingFunctions(const IntegrationUtils&);
 
 LayoutUnit blockAxisMinContentContribution(const PlacedGridItem&, LayoutUnit inlineAxisConstraint, const GridFormattingContext&);
 LayoutUnit blockAxisMaxContentContribution(const PlacedGridItem&, LayoutUnit inlineAxisConstraint, const GridFormattingContext&);
-GridItemSizingFunctions blockAxisGridItemSizingFunctions(const GridFormattingContext&);
 
 bool preferredSizeBehavesAsAuto(const Style::PreferredSize&);
 bool NODELETE preferredSizeDependsOnContainingBlockSize(const Style::PreferredSize&);
