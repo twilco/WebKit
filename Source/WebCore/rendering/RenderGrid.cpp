@@ -2234,7 +2234,7 @@ LayoutRange RenderGrid::gridAreaRangeForOutOfFlow(const RenderBox& gridItem, Sty
         return borderBefore();
     }();
 
-    LayoutRange defaultRange(borderEdge, isRowAxis ? clientLogicalWidth() : clientLogicalHeight());
+    LayoutRange defaultRange(borderEdge, isRowAxis ? paddingBoxLogicalWidth() : paddingBoxLogicalHeight());
     if (!gridItem.style().positionArea().isNone() && hasRenderOverflow() && hasPotentiallyScrollableOverflow()) {
         // position-area uses the scrollable containing block
         defaultRange = isRowAxis == writingMode().isHorizontal()
@@ -2260,7 +2260,7 @@ LayoutRange RenderGrid::gridAreaRangeForOutOfFlow(const RenderBox& gridItem, Sty
     auto& positions = this->positions(direction);
     if (positions.isEmpty()) {
         ASSERT_WITH_SECURITY_IMPLICATION(!positions.isEmpty());
-        return LayoutRange(borderEdge, isRowAxis ? clientLogicalWidth() : clientLogicalHeight());
+        return LayoutRange(borderEdge, isRowAxis ? paddingBoxLogicalWidth() : paddingBoxLogicalHeight());
     }
 
     if (startIsAuto)
@@ -2449,7 +2449,7 @@ LayoutOptionalOutsets RenderGrid::allowedLayoutOverflow() const
 
 LayoutUnit RenderGrid::translateRTLCoordinate(LayoutUnit coordinate) const
 {
-    LayoutUnit width = borderLogicalLeft() + borderLogicalRight() + clientLogicalWidth();
+    LayoutUnit width = borderLogicalLeft() + borderLogicalRight() + paddingBoxLogicalWidth();
 
     // If we are in horizontal writing mode and RTL direction the scrollbar is painted on the left,
     // so we need to take into account when computing the position of the columns.

@@ -29,12 +29,6 @@
 namespace WebCore {
 
 inline LayoutUnit RenderBox::marginBoxLogicalHeight(WritingMode writingMode) const { return writingMode.isHorizontal() ? m_marginBox.top() + borderBoxHeight() + m_marginBox.bottom() : m_marginBox.right() + borderBoxWidth() + m_marginBox.left(); }
-inline LayoutRect RenderBox::clientBoxRect() const { return LayoutRect(clientLeft(), clientTop(), clientWidth(), clientHeight()); }
-inline LayoutUnit RenderBox::clientLeft() const { return borderLeft(); }
-inline LayoutUnit RenderBox::clientLogicalBottom() const { return borderBefore() + clientLogicalHeight(); }
-inline LayoutUnit RenderBox::clientLogicalHeight() const { return writingMode().isHorizontal() ? clientHeight() : clientWidth(); }
-inline LayoutUnit RenderBox::clientLogicalWidth() const { return writingMode().isHorizontal() ? clientWidth() : clientHeight(); }
-inline LayoutUnit RenderBox::clientTop() const { return borderTop(); }
 inline LayoutRect RenderBox::computedCSSContentBoxRect() const { return LayoutRect(borderLeft() + computedCSSPaddingLeft(), borderTop() + computedCSSPaddingTop(), paddingBoxWidth() - computedCSSPaddingLeft() - computedCSSPaddingRight()  - (style().scrollbarGutter().isStableBothEdges() ? verticalScrollbarWidth() : 0), paddingBoxHeight() - computedCSSPaddingTop() - computedCSSPaddingBottom() - (style().scrollbarGutter().isStableBothEdges() ? horizontalScrollbarHeight() : 0)); }
 inline LayoutUnit RenderBox::contentBoxHeight() const { return std::max(0_lu, paddingBoxHeight() - paddingTop() - paddingBottom() - (style().scrollbarGutter().isStableBothEdges() ? horizontalScrollbarHeight() : 0)); }
 inline LayoutUnit RenderBox::contentBoxLogicalHeight() const { return writingMode().isHorizontal() ? contentBoxHeight() : contentBoxWidth(); }
@@ -72,6 +66,9 @@ inline LayoutSize RenderBox::logicalSize() const { return writingMode().isHorizo
 inline LayoutUnit RenderBox::logicalTop() const { return writingMode().isHorizontal() ? y() : x(); }
 inline LayoutUnit RenderBox::logicalWidth() const { return writingMode().isHorizontal() ? borderBoxWidth() : borderBoxHeight(); }
 inline LayoutUnit RenderBox::paddingBoxHeight() const { return std::max(0_lu, borderBoxHeight() - borderTop() - borderBottom() - horizontalScrollbarHeight()); }
+inline LayoutUnit RenderBox::paddingBoxLogicalBottom() const { return borderBefore() + paddingBoxLogicalHeight(); }
+inline LayoutUnit RenderBox::paddingBoxLogicalHeight() const { return writingMode().isHorizontal() ? paddingBoxHeight() : paddingBoxWidth(); }
+inline LayoutUnit RenderBox::paddingBoxLogicalWidth() const { return writingMode().isHorizontal() ? paddingBoxWidth() : paddingBoxHeight(); }
 inline LayoutUnit RenderBox::paddingBoxWidth() const { return std::max(0_lu, borderBoxWidth() - borderLeft() - borderRight() - verticalScrollbarWidth()); }
 inline int RenderBox::scrollbarLogicalHeight() const { return writingMode().isHorizontal() ? horizontalScrollbarHeight() : verticalScrollbarWidth(); }
 inline int RenderBox::scrollbarLogicalWidth() const { return writingMode().isHorizontal() ? verticalScrollbarWidth() : horizontalScrollbarHeight(); }
@@ -165,7 +162,7 @@ inline LayoutRect RenderBox::contentBoxRect() const
 
 inline LayoutRect RenderBox::flippedContentBoxRect() const
 {
-    auto rect = flippedClientBoxRect();
+    auto rect = flippedPaddingBoxRect();
     auto padding = this->padding();
     if (!padding.isZero()) {
         if (writingMode().isBlockFlipped())
@@ -198,7 +195,7 @@ inline const LayoutRect RenderBox::scrollableContentAreaOverflowRect() const
 inline const LayoutRect RenderBox::scrollablePaddingAreaOverflowRect() const
 {
     if (!m_overflow)
-        return flippedClientBoxRect();
+        return flippedPaddingBoxRect();
 
     auto overflowRect = m_overflow->contentArea();
     flipForWritingMode(overflowRect);

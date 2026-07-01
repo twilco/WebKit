@@ -3078,7 +3078,7 @@ IntSize RenderLayer::visibleSize() const
     if (!box)
         return IntSize();
 
-    return IntSize(roundToInt(box->clientWidth()), roundToInt(box->clientHeight()));
+    return IntSize(roundToInt(box->paddingBoxWidth()), roundToInt(box->paddingBoxHeight()));
 }
 
 RenderLayer::OverflowControlRects RenderLayer::overflowControlsRects() const

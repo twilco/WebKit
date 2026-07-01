@@ -255,7 +255,7 @@ LayoutUnit RenderView::clientLogicalWidthForFixedPosition() const
     if (settings().visualViewportEnabled())
         return isHorizontalWritingMode() ? frameView->layoutViewportRect().width() : frameView->layoutViewportRect().height();
 
-    return clientLogicalWidth();
+    return paddingBoxLogicalWidth();
 }
 
 LayoutUnit RenderView::clientLogicalHeightForFixedPosition() const
@@ -272,7 +272,7 @@ LayoutUnit RenderView::clientLogicalHeightForFixedPosition() const
     if (settings().visualViewportEnabled())
         return isHorizontalWritingMode() ? frameView->layoutViewportRect().height() : frameView->layoutViewportRect().width();
 
-    return clientLogicalHeight();
+    return paddingBoxLogicalHeight();
 }
 
 void RenderView::mapLocalToContainer(const RenderLayerModelObject* ancestorContainer, TransformState& transformState, OptionSet<MapCoordinatesMode> mode, bool* wasFixed) const

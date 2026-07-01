@@ -154,10 +154,10 @@ public:
     // For horizontal-tb and vertical-lr they will match physical directions, but for horizontal-bt and vertical-rl, the top/bottom and left/right
     // respectively are flipped when compared to their physical counterparts.  For example minX is on the left in vertical-lr,
     // but it is on the right in vertical-rl.
-    WEBCORE_EXPORT LayoutRect flippedClientBoxRect() const;
+    WEBCORE_EXPORT LayoutRect flippedPaddingBoxRect() const;
     inline const LayoutRect scrollableContentAreaOverflowRect() const;
     inline const LayoutRect scrollablePaddingAreaOverflowRect() const;
-    LayoutRect layoutOverflowRect() const { return m_overflow ? m_overflow->layoutOverflowRect() : flippedClientBoxRect(); }
+    LayoutRect layoutOverflowRect() const { return m_overflow ? m_overflow->layoutOverflowRect() : flippedPaddingBoxRect(); }
     bool hasLayoutOverflow() const;
     inline LayoutUnit logicalLeftLayoutOverflow() const;
     inline LayoutUnit logicalRightLayoutOverflow() const;
@@ -167,7 +167,7 @@ public:
 
     // RenderBox's basic allowedLayoutOverflow() accounts for the writing mode (only).
     virtual LayoutOptionalOutsets allowedLayoutOverflow() const;
-    LayoutRect clampToAllowedLayoutOverflow(const LayoutRect&, const LayoutRect& flippedClientBoxRect);
+    LayoutRect clampToAllowedLayoutOverflow(const LayoutRect&, const LayoutRect& flippedPaddingBoxRect);
     void addLayoutOverflow(const LayoutRect&);
     void addVisualOverflow(const LayoutRect&);
     void clearOverflow();
@@ -207,6 +207,9 @@ public:
 
     inline LayoutUnit paddingBoxWidth() const;
     inline LayoutUnit paddingBoxHeight() const;
+    inline LayoutUnit paddingBoxLogicalWidth() const;
+    inline LayoutUnit paddingBoxLogicalHeight() const;
+    inline LayoutUnit paddingBoxLogicalBottom() const;
     LayoutRect paddingBoxRect() const;
     inline LayoutRect paddingBoxRectIncludingScrollbar() const;
 
@@ -215,18 +218,7 @@ public:
     LayoutUnit offsetWidth() const override { return borderBoxWidth(); }
     LayoutUnit offsetHeight() const override { return borderBoxHeight(); }
 
-    // More IE extensions.  clientWidth and clientHeight represent the interior of an object
-    // excluding border and scrollbar.  clientLeft/Top are just the borderLeftWidth and borderTopWidth.
-    inline LayoutUnit clientLeft() const;
-    inline LayoutUnit clientTop() const;
-    WEBCORE_EXPORT LayoutUnit clientWidth() const;
-    WEBCORE_EXPORT LayoutUnit clientHeight() const;
-    inline LayoutUnit clientLogicalWidth() const;
-    inline LayoutUnit clientLogicalHeight() const;
-    inline LayoutUnit clientLogicalBottom() const;
-    inline LayoutRect clientBoxRect() const;
-
-    // scrollWidth/scrollHeight will be the same as clientWidth/clientHeight unless the
+    // scrollWidth/scrollHeight will be the same as paddingBoxWidth/paddingBoxHeight unless the
     // object has overflow:hidden/scroll/auto specified and also has overflow.
     // scrollLeft/Top return the current scroll position.  These methods are virtual so that objects like
     // textareas can scroll shadow content (but pretend that they are the objects that are
@@ -574,7 +566,7 @@ public:
             return false;
 
         auto layoutOverflowRect = m_overflow->layoutOverflowRect();
-        auto paddingBoxRect = flippedClientBoxRect();
+        auto paddingBoxRect = flippedPaddingBoxRect();
         return layoutOverflowRect.x() < paddingBoxRect.x() || layoutOverflowRect.maxX() > paddingBoxRect.maxX();
     }
 
@@ -584,7 +576,7 @@ public:
             return false;
 
         auto layoutOverflowRect = m_overflow->layoutOverflowRect();
-        auto paddingBoxRect = flippedClientBoxRect();
+        auto paddingBoxRect = flippedPaddingBoxRect();
         return layoutOverflowRect.y() < paddingBoxRect.y() || layoutOverflowRect.maxY() > paddingBoxRect.maxY();
     }
 
