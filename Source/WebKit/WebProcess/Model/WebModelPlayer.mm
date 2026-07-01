@@ -746,9 +746,11 @@ bool WebModelPlayer::paused() const
 
 Seconds WebModelPlayer::currentTime() const
 {
+    if (m_modelLoader)
+        return Seconds([m_modelLoader currentTime]);
     if (m_cachedAnimationState)
         return m_cachedAnimationState->currentTime();
-    return Seconds([m_modelLoader currentTime]);
+    return 0_s;
 }
 
 void WebModelPlayer::updateClockTimeOnAnimationState()
