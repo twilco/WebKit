@@ -60,12 +60,12 @@ PASS IACVT argument shadows outer scope, typed
 PASS IACVT argument shadows outer scope, type mismatch
 PASS Missing only argument
 PASS Missing one argument of several
-FAIL Passing list as only argument assert_equals: expected "1px,2px" but got "{1px,2px}"
-FAIL Passing list as first argument assert_equals: expected "1px, 2px | 3px" but got "{1px, 2px} | 3px"
-FAIL Passing list as second argument assert_equals: expected "1px | 2px, 3px" but got "1px | {2px, 3px}"
-FAIL Passing comma as argument assert_equals: expected "," but got "{,}"
-FAIL Passing {} as argument assert_equals: expected "{}" but got "{{}}"
-FAIL Passing non-whole-value {} as argument assert_equals: expected "foo{}" but got "{foo{}}"
+PASS Passing list as only argument
+PASS Passing list as first argument
+PASS Passing list as second argument
+PASS Passing comma as argument
+PASS Passing {} as argument
+PASS Passing non-whole-value {} as argument
 PASS Local variable with initial keyword
 PASS Local variable with initial keyword, defaulted
 PASS Local variable with initial keyword, no value via IACVT-capture

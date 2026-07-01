@@ -76,6 +76,20 @@ static bool containsURLTokens(std::span<const CSSParserToken> tokens)
     return false;
 }
 
+// A comma-containing value can be passed as a single free-form-production argument by wrapping it in
+// curly braces. The braces are syntactic and the argument is the block's contents.
+// https://drafts.csswg.org/css-values-5/#component-function-commas
+static CSSParserTokenRange unwrapArgumentBraces(CSSParserTokenRange argument)
+{
+    auto range = argument;
+    range.consumeWhitespace();
+    if (range.peek().type() != LeftBraceToken)
+        return argument;
+    auto contents = range.consumeBlock();
+    range.consumeWhitespace();
+    return range.atEnd() ? contents : argument;
+}
+
 static Ref<CSSVariableData> createFirstValidVariableData(std::span<const std::span<const CSSParserToken>> candidates, const CSSParserContext& context)
 {
     // Uses the internal -internal-first-valid name rather than the public first-valid(). The public
@@ -362,7 +376,7 @@ bool SubstitutionResolver::substituteDashedFunction(StringView functionName, CSS
             auto argumentRange = CSSPropertyParserHelpers::consumeArgument(range, i);
             if (!argumentRange)
                 break;
-            auto substituted = substituteTokenRange(*argumentRange, m_substitutionValue->context());
+            auto substituted = substituteTokenRange(unwrapArgumentBraces(*argumentRange), m_substitutionValue->context());
             // A failed substitution leaves the argument guaranteed-invalid (empty) so it defaults via
             // first-valid(), rather than aborting. https://drafts.csswg.org/css-mixins/#replace-a-dashed-function
             result.append(substituted.value_or(Vector<CSSParserToken> { }));
@@ -736,12 +750,7 @@ bool SubstitutionResolver::substituteInternalAutoBaseFunction(CSSParserTokenRang
 
     auto selectedRange = isBaseAppearance() ? *secondArgRange : *firstArgRange;
 
-    // Strip outer braces if present, allowing comma-containing values like:
-    // -internal-auto-base({value1, value2}, {value3, value4})
-    if (!selectedRange.atEnd() && selectedRange.peek().type() == LeftBraceToken)
-        selectedRange = selectedRange.consumeBlock();
-
-    auto selectedTokens = substituteTokenRange(selectedRange, context);
+    auto selectedTokens = substituteTokenRange(unwrapArgumentBraces(selectedRange), context);
     if (!selectedTokens)
         return false;
 
