@@ -3157,6 +3157,21 @@ FilterLinkDecorationByDefaultEnabled:
     WebCore:
       default: false
 
+FindInVideoEnabled:
+  type: bool
+  status: testable
+  category: media
+  humanReadableName: "Find in Video"
+  humanReadableDescription: "Include video subtitle/caption cues in Find-in-Page results"
+  condition: ENABLE(VIDEO)
+  defaultValue:
+    WebKitLegacy:
+      default: false
+    WebKit:
+      default: false
+    WebCore:
+      default: false
+
 FixedFontFamily:
   type: String
   status: embedder

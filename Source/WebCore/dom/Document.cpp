@@ -2653,10 +2653,11 @@ void Document::forEachMediaElement(NOESCAPE const Function<void(HTMLMediaElement
 Vector<CueMatch> Document::findCueMatches(const String& target, FindOptions options)
 {
     Vector<CueMatch> results;
+    if (!settings().findInVideoEnabled())
+        return results;
     if (target.isEmpty())
         return results;
 
-    // Order this document's media elements by tree position.
     Vector<Ref<HTMLMediaElement>> elements;
     forEachMediaElement([&](HTMLMediaElement& element) {
         if (element.isConnected())
@@ -2678,7 +2679,6 @@ Vector<CueMatch> Document::findCueMatches(const String& target, FindOptions opti
             RefPtr track = tracks->item(i);
             if (!track)
                 continue;
-            // Only search tracks that are currently rendered on screen.
             if (track->mode() != TextTrack::Mode::Showing)
                 continue;
             // Only search tracks whose cues carry text the user reads or hears, skip chapters and metadata tracks.
@@ -2712,6 +2712,14 @@ Vector<CueMatch> Document::findCueMatches(const String& target, FindOptions opti
         std::ranges::stable_sort(results.mutableSubspan(firstMatchForElement), [](auto& a, auto& b) {
             return a.seekTime < b.seekTime;
         });
+
+        // Collapse cues that share a start time
+        MediaTime previousSeekTime = MediaTime::invalidTime();
+        results.removeAllMatching([&previousSeekTime](auto& match) {
+            bool isDuplicate = match.seekTime == previousSeekTime;
+            previousSeekTime = match.seekTime;
+            return isDuplicate;
+        }, firstMatchForElement);
     }
 
     return results;
