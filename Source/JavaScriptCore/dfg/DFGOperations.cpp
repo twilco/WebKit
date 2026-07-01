@@ -2779,7 +2779,7 @@ JSC_DEFINE_JIT_OPERATION(operationNewArrayBuffer, JSCell*, (VM* vmPointer, Struc
         if (auto* arrayBuffer = dynamicDowncast<JSArrayBuffer>(firstValue)) \
             isResizableOrGrowableShared = arrayBuffer->isResizableOrGrowableShared(); \
         Structure* structure = globalObject->typedArrayStructure(Type##type, isResizableOrGrowableShared); \
-        OPERATION_RETURN(scope, reinterpret_cast<char*>(constructGenericTypedArrayViewWithArguments<JS##type##Array>(globalObject, structure, firstValue, 0, std::nullopt))); \
+        OPERATION_RETURN(scope, reinterpret_cast<char*>(operationConstructGenericTypedArrayViewWithOneArgumentImpl<JS##type##Array>(globalObject, structure, firstValue))); \
     } \
 
     FOR_EACH_TYPED_ARRAY_TYPE_EXCLUDING_DATA_VIEW(JSC_TYPED_ARRAY_OPERATIONS)
