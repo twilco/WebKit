@@ -1121,13 +1121,13 @@ bool RenderLayerScrollableArea::positionOverflowControls(const IntSize& offsetFr
         }
     }
 
-    if (m_scrollCorner && m_scrollCorner->frameRect() != rects.scrollCorner) {
-        m_scrollCorner->setFrameRect(rects.scrollCorner);
+    if (m_scrollCorner && m_scrollCorner->borderBoxRectInContainer() != rects.scrollCorner) {
+        m_scrollCorner->setBorderBoxInContainer(rects.scrollCorner);
         changed = true;
     }
 
-    if (m_resizer && m_resizer->frameRect() != rects.resizer) {
-        m_resizer->setFrameRect(rects.resizer);
+    if (m_resizer && m_resizer->borderBoxRectInContainer() != rects.resizer) {
+        m_resizer->setBorderBoxInContainer(rects.resizer);
         changed = true;
     }
     return changed;

@@ -357,7 +357,7 @@ LayoutRect RenderTextControlSingleLine::controlClipRect(const LayoutPoint& addit
     ASSERT(hasControlClip());
     auto clipRect = paddingBoxRect();
     if (auto* containerElementRenderer = containerElement() ? containerElement()->renderBox() : nullptr)
-        clipRect = unionRect(clipRect, containerElementRenderer->frameRect());
+        clipRect = unionRect(clipRect, containerElementRenderer->borderBoxRectInContainer());
     clipRect.moveBy(additionalOffset);
     return clipRect;
 }

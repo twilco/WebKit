@@ -2271,7 +2271,7 @@ std::optional<InspectorOverlay::Highlight::FlexHighlightOverlay> InspectorOverla
     for (CheckedPtr renderChild : renderChildrenInFlexOrder) {
         // Build bounds for each child and collect children on the same logical line.
         {
-            auto childRect = renderChild->frameRect();
+            auto childRect = renderChild->borderBoxRectInContainer();
             renderFlex->flipForWritingMode(childRect);
             childRect.expand(renderChild->marginBox());
 

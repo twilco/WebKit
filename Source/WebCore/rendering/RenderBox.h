@@ -62,20 +62,18 @@ public:
     bool NODELETE requiresLayerWithScrollableArea() const;
     bool backgroundIsKnownToBeOpaqueInRect(const LayoutRect& localRect) const override;
 
-    LayoutUnit x() const { return m_frameRect.x(); }
-    LayoutUnit y() const { return m_frameRect.y(); }
-    LayoutUnit borderBoxWidth() const { return m_frameRect.width(); }
-    LayoutUnit borderBoxHeight() const { return m_frameRect.height(); }
+    LayoutUnit x() const { return m_borderBoxRectInContainer.x(); }
+    LayoutUnit y() const { return m_borderBoxRectInContainer.y(); }
 
     // These represent your location relative to your container as a physical offset.
     // In layout related methods you almost always want the logical location (e.g. x() and y()).
     LayoutUnit top() const { return topLeftLocation().y(); }
     LayoutUnit left() const { return topLeftLocation().x(); }
 
-    template<typename T> void setX(T x) { m_frameRect.setX(x); }
-    template<typename T> void setY(T y) { m_frameRect.setY(y); }
-    template<typename T> void setBorderBoxWidth(T width) { m_frameRect.setWidth(width); }
-    template<typename T> void setBorderBoxHeight(T height) { m_frameRect.setHeight(height); }
+    template<typename T> void setX(T x) { m_borderBoxRectInContainer.setX(x); }
+    template<typename T> void setY(T y) { m_borderBoxRectInContainer.setY(y); }
+    template<typename T> void setBorderBoxWidth(T width) { m_borderBoxRectInContainer.setWidth(width); }
+    template<typename T> void setBorderBoxHeight(T height) { m_borderBoxRectInContainer.setHeight(height); }
 
     inline LayoutUnit logicalLeft() const;
     inline LayoutUnit logicalRight() const;
@@ -96,28 +94,22 @@ public:
     inline void setLogicalHeight(LayoutUnit);
     inline void setLogicalSize(LayoutSize);
 
-    LayoutPoint location() const { return m_frameRect.location(); }
+    LayoutPoint location() const { return m_borderBoxRectInContainer.location(); }
     LayoutSize locationOffset() const { return LayoutSize(x(), y()); }
-    LayoutSize borderBoxSize() const { return m_frameRect.size(); }
     inline LayoutSize logicalSize() const;
 
-    void setLocation(const LayoutPoint& location) { m_frameRect.setLocation(location); }
+    void setLocation(const LayoutPoint& location) { m_borderBoxRectInContainer.setLocation(location); }
     
-    void setBorderBoxSize(const LayoutSize& size) { m_frameRect.setSize(size); }
-    void move(LayoutUnit dx, LayoutUnit dy) { m_frameRect.move(dx, dy); }
+    void setBorderBoxSize(const LayoutSize& size) { m_borderBoxRectInContainer.setSize(size); }
+    void move(LayoutUnit dx, LayoutUnit dy) { m_borderBoxRectInContainer.move(dx, dy); }
 
-    LayoutRect frameRect() const { return m_frameRect; }
-    void setFrameRect(const LayoutRect& rect) { m_frameRect = rect; }
-
-    inline LayoutRect marginBoxRect() const;
-    LayoutRect borderBoxRect() const { return LayoutRect(LayoutPoint(), borderBoxSize()); }
-    LayoutRect borderBoundingBox() const final { return borderBoxRect(); }
+    LayoutRect borderBoxRectInContainer() const { return m_borderBoxRectInContainer; }
+    void setBorderBoxInContainer(const LayoutRect& rect) { m_borderBoxRectInContainer = rect; }
 
     // Don't use this; it doesn't make sense in a future world with corner-shape. Use BorderShape instead.
     WEBCORE_EXPORT LayoutRoundedRectRadii borderRadii() const;
 
     // The content area of the box (excludes padding - and intrinsic padding for table cells, etc... - and border).
-    inline LayoutRect contentBoxRect() const;
     LayoutPoint contentBoxLocation() const;
     inline LayoutRect flippedContentBoxRect() const;
 
@@ -196,6 +188,12 @@ public:
 
     void applyTransform(TransformationMatrix&, const Style::ComputedStyle&, const FloatRect& boundingBox, OptionSet<Style::TransformResolverOption>) const override;
 
+    // margin, border, padding and content box rects are relative to border box.
+    inline LayoutRect marginBoxRect() const;
+    LayoutRect borderBoxRect() const { return { { }, borderBoxSize() }; }
+    LayoutRect paddingBoxRect() const;
+    inline LayoutRect contentBoxRect() const;
+
     inline LayoutSize contentBoxSize() const;
     inline LayoutUnit contentBoxWidth() const;
     inline LayoutUnit contentBoxHeight() const;
@@ -210,8 +208,13 @@ public:
     inline LayoutUnit paddingBoxLogicalWidth() const;
     inline LayoutUnit paddingBoxLogicalHeight() const;
     inline LayoutUnit paddingBoxLogicalBottom() const;
-    LayoutRect paddingBoxRect() const;
     inline LayoutRect paddingBoxRectIncludingScrollbar() const;
+
+    LayoutUnit borderBoxWidth() const { return m_borderBoxRectInContainer.width(); }
+    LayoutUnit borderBoxHeight() const { return m_borderBoxRectInContainer.height(); }
+    LayoutSize borderBoxSize() const { return m_borderBoxRectInContainer.size(); }
+
+    LayoutRect borderBoundingBox() const final { return borderBoxRect(); }
 
     // IE extensions. Used to calculate offsetWidth/Height.  Overridden by inlines (RenderFlow)
     // to return the remaining width on a given line (and the height of a single line).
@@ -758,7 +761,7 @@ private:
     // These include tables, positioned objects, floats and flexible boxes.
     virtual void computeIntrinsicLogicalWidthContributions();
 
-    LayoutRect frameRectForStickyPositioning() const override { return frameRect(); }
+    LayoutRect frameRectForStickyPositioning() const override { return borderBoxRectInContainer(); }
 
     RepaintRects computeVisibleRectsUsingPaintOffset(const RepaintRects&) const;
     
@@ -768,8 +771,8 @@ private:
     void removeShapeOutsideInfo();
 
 private:
-    // The width/height of the contents + borders + padding.  The x/y location is relative to our container (which is not always our parent).
-    LayoutRect m_frameRect;
+    // Relative to our container.
+    LayoutRect m_borderBoxRectInContainer;
 
 protected:
     LayoutBoxExtent m_marginBox;
