@@ -621,8 +621,8 @@ void MediaSource::streamEndedWithError(std::optional<EndOfStreamError> error)
         // the buffered attribute across all SourceBuffer objects in sourceBuffers.
         MediaTime maxEndTime;
         for (Ref sourceBuffer : m_sourceBuffers.get()) {
-            if (auto length = sourceBuffer->bufferedInternal().length())
-                maxEndTime = std::max(sourceBuffer->bufferedInternal().end(length - 1), maxEndTime);
+            if (auto span = sourceBuffer->bufferedInternal().span(); !span.empty())
+                maxEndTime = std::max(span.back().end, maxEndTime);
         }
         setDurationInternal(maxEndTime);
 

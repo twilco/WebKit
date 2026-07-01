@@ -6380,10 +6380,9 @@ Ref<TimeRanges> HTMLMediaElement::buffered() const
 double HTMLMediaElement::maxBufferedTime() const
 {
     auto bufferedRanges = buffered();
-    unsigned numRanges = bufferedRanges->length();
-    if (!numRanges)
-        return 0;
-    return bufferedRanges.get().ranges().end(numRanges - 1).toDouble();
+    if (auto span = bufferedRanges.get().ranges().span(); !span.empty())
+        return span.back().end.toDouble();
+    return 0;
 }
 
 Ref<TimeRanges> HTMLMediaElement::played()
