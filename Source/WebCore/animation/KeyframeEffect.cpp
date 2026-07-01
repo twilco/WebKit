@@ -1425,7 +1425,7 @@ void KeyframeEffect::computeCSSAnimationBlendingKeyframes(const Style::ComputedS
 
     BlendingKeyframes blendingKeyframes(AtomString { backingStyleAnimationName->name });
     if (m_target) {
-        Style::Scope::resolveTreeScopedReference(protect(*m_target), *backingStyleAnimationName, [&](const Style::Scope& scope, const AtomString&) {
+        Style::resolveTreeScopedReference(protect(*m_target), *backingStyleAnimationName, [&](const Style::Scope& scope, const Style::ScopedName&) {
             ASSERT(scope.resolverIfExists());
             return protect(scope.resolverIfExists())->keyframeStylesForAnimation(protect(*m_target), unanimatedStyle, resolutionContext, blendingKeyframes, backingStyleAnimation.timingFunction().value.ptr());
         });

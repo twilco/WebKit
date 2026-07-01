@@ -28,6 +28,7 @@
 #include "CSSParserTokenRange.h"
 #include "StyleCustomProperty.h"
 #include "StyleRuleFunction.h"
+#include "StyleScopeOrdinal.h"
 
 namespace WebCore {
 
@@ -66,7 +67,7 @@ private:
     bool substituteVariableFunction(CSSParserTokenRange, CSSValueID, Vector<CSSParserToken>&, const CSSParserContext&);
     bool substituteFirstValid(CSSParserTokenRange, Vector<CSSParserToken>&, const CSSParserContext&);
     bool substituteDashedFunction(StringView functionName, CSSParserTokenRange, Vector<CSSParserToken>&);
-    RefPtr<MutableStyleProperties> resolveAndRegisterDashedFunctionArguments(const Vector<StyleRuleFunction::Parameter>&, const Vector<Vector<CSSParserToken>>&, LocalPropertyRegistry&);
+    RefPtr<MutableStyleProperties> resolveAndRegisterDashedFunctionArguments(const Vector<StyleRuleFunction::Parameter>&, const Vector<Vector<CSSParserToken>>&, LocalPropertyRegistry&, ScopeOrdinal definitionScope);
     bool substituteAttrFunction(CSSParserTokenRange, Vector<CSSParserToken>&, const CSSParserContext&);
     bool substituteInternalAutoBaseFunction(CSSParserTokenRange, Vector<CSSParserToken>&, const CSSParserContext&);
 

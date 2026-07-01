@@ -222,7 +222,7 @@ bool SubstitutionResolver::substituteFirstValid(CSSParserTokenRange range, Vecto
 // Registers each parameter with its type, resolves argument styles, then updates registrations
 // to universal syntax with resolved values as initial values.
 // Returns resolved argument properties to prepend to the body rule, or nullptr on failure.
-RefPtr<MutableStyleProperties> SubstitutionResolver::resolveAndRegisterDashedFunctionArguments(const Vector<StyleRuleFunction::Parameter>& parameters, const Vector<Vector<CSSParserToken>>& arguments, LocalPropertyRegistry& registrations)
+RefPtr<MutableStyleProperties> SubstitutionResolver::resolveAndRegisterDashedFunctionArguments(const Vector<StyleRuleFunction::Parameter>& parameters, const Vector<Vector<CSSParserToken>>& arguments, LocalPropertyRegistry& registrations, ScopeOrdinal definitionScope)
 {
     // A parameter without a default requires a corresponding argument. A missing one makes the whole
     // invocation guaranteed-invalid (unlike a supplied-but-invalid argument, which defaults below).
@@ -286,7 +286,7 @@ RefPtr<MutableStyleProperties> SubstitutionResolver::resolveAndRegisterDashedFun
     // The hypothetical element acts as a child of the calling element, inheriting its computed custom
     // properties on demand, so defaults like `var(--caller-prop)` or `inherit` resolve against it.
     auto argumentMatchResult = MatchResult::create();
-    argumentMatchResult->authorDeclarations.append({ WTF::move(argumentRule) });
+    argumentMatchResult->authorDeclarations.append({ .properties = WTF::move(argumentRule), .styleScopeOrdinal = definitionScope });
 
     auto builderContext = BuilderContext {
         .document = m_styleBuilder.state().document(),
@@ -334,16 +334,21 @@ bool SubstitutionResolver::substituteDashedFunction(StringView functionName, CSS
     auto scopedFunctionName = ScopedName { functionName.toAtomString(), m_styleBuilder.state().styleScopeOrdinal() };
 
     CheckedPtr element = m_styleBuilder.state().element();
-    auto customFunction = Scope::resolveTreeScopedReference(*element, scopedFunctionName, [](const Scope& scope, const AtomString& name) -> CheckedPtr<const CustomFunction> {
+    auto resolved = resolveTreeScopedReference(*element, scopedFunctionName, [](const Scope& scope, const ScopedName& scopedName) -> std::optional<std::pair<CheckedRef<const CustomFunction>, ScopeOrdinal>> {
         RefPtr resolver = scope.resolverIfExists();
         CheckedPtr registry = resolver ? resolver->customFunctionRegistry() : nullptr;
-        return registry ? registry->functionForName(name) : nullptr;
+        CheckedPtr function = registry ? registry->functionForName(scopedName.name) : nullptr;
+        if (!function)
+            return { };
+        return std::pair { function.releaseNonNull(), scopedName.scopeOrdinal };
     });
 
-    if (!customFunction)
+    if (!resolved)
         return false;
 
-    auto guard = m_styleBuilder.state().guardSubstitutionContext({ SubstitutionContext::Type::Function, scopedFunctionName.name });
+    auto& [customFunction, foundScopeOrdinal] = *resolved;
+
+    auto guard = m_styleBuilder.state().guardSubstitutionContext({ SubstitutionContext::Type::Function, scopedFunctionName.name, foundScopeOrdinal });
 
     if (guard.isCyclicContext())
         return false;
@@ -377,7 +382,7 @@ bool SubstitutionResolver::substituteDashedFunction(StringView functionName, CSS
     // "Let registrations be an initially empty set of custom property registrations."
     auto registrations = LocalPropertyRegistry { };
 
-    auto resolvedArgumentProperties = resolveAndRegisterDashedFunctionArguments(parameters, *substitutedArguments, registrations);
+    auto resolvedArgumentProperties = resolveAndRegisterDashedFunctionArguments(parameters, *substitutedArguments, registrations, foundScopeOrdinal);
     if (!resolvedArgumentProperties)
         return false;
 
@@ -391,9 +396,11 @@ bool SubstitutionResolver::substituteDashedFunction(StringView functionName, CSS
     }
 
     // "Let body rule be the function body."
+    // The body resolves tree-scoped references (var(), nested dashed-functions) relative to the scope
+    // where the function was defined, not the calling element's scope.
     auto bodyMatchResult = MatchResult::create();
     bodyMatchResult->authorDeclarations.append({ *resolvedArgumentProperties });
-    bodyMatchResult->authorDeclarations.append({ customFunction->properties });
+    bodyMatchResult->authorDeclarations.append({ .properties = customFunction->properties, .styleScopeOrdinal = foundScopeOrdinal });
 
     // "Resolve function styles using custom function, body rule, registrations, and calling context."
     // The hypothetical element acts as a child of the calling element, inheriting its computed custom
