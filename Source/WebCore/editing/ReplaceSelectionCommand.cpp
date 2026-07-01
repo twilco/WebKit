@@ -1345,9 +1345,8 @@ void ReplaceSelectionCommand::doApply()
     InsertedNodes insertedNodes;
     RefPtr refNode = fragment.firstChild();
     RefPtr node = refNode->nextSibling();
-    
-    if (refNode)
-        fragment.removeNode(*refNode);
+
+    fragment.removeNode(*refNode);
 
     RefPtr blockStart { enclosingBlock(protect(insertionPos.deprecatedNode())) };
 
