@@ -260,6 +260,22 @@ inline bool RenderBox::hasStretchedLogicalWidth(StretchingMode mode) const
     return containingBlock->willStretchItem(*this, containingAxis, mode);
 }
 
+inline bool RenderBox::tryLayoutDoingOutOfFlowMovementOnly()
+{
+    LayoutUnit oldWidth = borderBoxWidth();
+    updateLogicalWidth();
+    // If we shrink to fit our width may have changed, so we still need full layout.
+    if (oldWidth != borderBoxWidth())
+        return false;
+    updateLogicalHeight();
+    return true;
+}
+
+inline void RenderBox::markShapeOutsideDependentsForLayout()
+{
+    if (isFloating())
+        removeFloatingOrOutOfFlowChildFromBlockLists();
+}
 
 inline LayoutUnit resolveHeightForRatio(LayoutUnit borderAndPaddingLogicalWidth, LayoutUnit borderAndPaddingLogicalHeight, LayoutUnit logicalWidth, double aspectRatio, BoxSizing boxSizing)
 {
