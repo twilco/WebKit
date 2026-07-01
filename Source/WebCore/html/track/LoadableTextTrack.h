@@ -58,8 +58,6 @@ private:
     AtomString id() const final;
     bool isDefault() const final;
 
-    void loadTimerFired();
-
 #if !RELEASE_LOG_DISABLED
     ASCIILiteral logClassName() const override { return "LoadableTextTrack"_s; }
 #endif

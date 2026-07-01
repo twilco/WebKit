@@ -103,9 +103,6 @@ protected:
     VTTCueBox(Document&, VTTCue&);
 
     RenderPtr<RenderElement> createElementRenderer(Style::ComputedStyle&&, const RenderTreePosition&) final;
-
-private:
-    WeakPtr<VTTCue> m_cue;
 };
 
 // ----------------------------
@@ -238,8 +235,6 @@ private:
     VTTCue(Document&, Ref<WebVTTCueData>&&);
 
     void createWebVTTNodeTree();
-
-    void parseSettings(const String&);
 
     void determineTextDirection();
     void calculateDisplayParameters();
