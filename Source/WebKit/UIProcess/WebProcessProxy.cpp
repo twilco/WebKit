@@ -2081,6 +2081,8 @@ void WebProcessProxy::didChangeThrottleState(ProcessThrottleState type)
 
     ASSERT(!m_backgroundToken || !m_foregroundToken);
     m_backgroundResponsivenessTimer->updateState();
+
+    updateMediaStreamingActivity();
 }
 
 void WebProcessProxy::didDropLastAssertion()
@@ -2156,6 +2158,9 @@ void WebProcessProxy::updateMediaStreamingActivity()
         return remotePage ? remotePage->mediaState().contains(MediaProducerMediaState::HasStreamingActivity) : false;
     });
     bool hasMediaStreamingWebPage = hasMediaStreamingMainPage || hasMediaStreamingRemotePage;
+
+    if (isSuspended())
+        hasMediaStreamingWebPage = false;
 
     if (!!m_mediaStreamingActivity == hasMediaStreamingWebPage)
         return;

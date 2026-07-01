@@ -1050,6 +1050,7 @@
 				WebKit/WKWebView/mac/WKWebViewMacEditingTests.mm,
 				WebKit/WKWebView/mac/WKWebViewTitlebarSeparatorTests.mm,
 				WebKit/WKWebView/mac/WordBoundaryTypingAttributes.mm,
+				WebKit/WKWebView/MediaStreamingActivitySuspended.mm,
 				WebKit/WKWebView/MediaStreamTrackDetached.mm,
 				WebKit/WKWebView/MSEIsTypeSupportedCaching.mm,
 				WebKit/WKWebView/NoHistoryItemScrollToFragment.mm,
