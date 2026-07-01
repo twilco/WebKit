@@ -64,6 +64,7 @@
 #include "NavigationHistoryEntry.h"
 #include "NavigationNavigationType.h"
 #include "NavigationScheduler.h"
+#include "NodeDocument.h"
 #include "Page.h"
 #include "ScriptExecutionContextInlines.h"
 #include "SecurityOrigin.h"
@@ -1355,6 +1356,12 @@ Navigation::DispatchResult Navigation::innerDispatchNavigateEvent(NavigationNavi
         updatedSourceElement = submitter.get();
         if (!updatedSourceElement)
             updatedSourceElement = form.ptr();
+    }
+
+    if (updatedSourceElement) {
+        Ref sourceOrigin = protect(updatedSourceElement->document())->securityOrigin();
+        if (!protect(document->securityOrigin())->isSameOriginDomain(sourceOrigin))
+            updatedSourceElement = nullptr;
     }
 
     RefPtr abortController = AbortController::create(*scriptExecutionContext);
