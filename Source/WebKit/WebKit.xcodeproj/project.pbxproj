@@ -2506,6 +2506,7 @@
 		E3E1B33D2F85043E00B584C4 /* com.apple.WebProcess.x86.sb in Resources */ = {isa = PBXBuildFile; fileRef = E3E1B33C2F85021400B584C4 /* com.apple.WebProcess.x86.sb */; };
 		E3E6297E2D5FA8F200DAE50C /* ServiceWorkerDebuggableProxy.h in Headers */ = {isa = PBXBuildFile; fileRef = E3E6297C2D5FA8F200DAE50C /* ServiceWorkerDebuggableProxy.h */; };
 		E3E6297F2D5FA8F200DAE50C /* ServiceWorkerDebuggableProxy.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E3E6297D2D5FA8F200DAE50C /* ServiceWorkerDebuggableProxy.cpp */; };
+		E3E844882F9BAC4E00ABD79C /* PathsBlockedForSandboxExtensions.mm in Sources */ = {isa = PBXBuildFile; fileRef = E3E844872F9BAC4E00ABD79C /* PathsBlockedForSandboxExtensions.mm */; };
 		E3E84BDA2AE0AAE50091B3C2 /* XPCEndpoint.h in Copy Testing Headers */ = {isa = PBXBuildFile; fileRef = C14D306724B794E700480387 /* XPCEndpoint.h */; };
 		E3E84BDB2AE0AAE50091B3C2 /* XPCEndpointClient.h in Copy Testing Headers */ = {isa = PBXBuildFile; fileRef = C14D306824B794E700480387 /* XPCEndpointClient.h */; };
 		E3E84BEE2AE1AA5A0091B3C2 /* ExtensionKitSPI.h in Headers */ = {isa = PBXBuildFile; fileRef = E3E84BED2AE1AA5A0091B3C2 /* ExtensionKitSPI.h */; };
@@ -8773,6 +8774,8 @@
 		E3E1B3412F85274B00B584C4 /* xpc-self.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "xpc-self.plist"; sourceTree = "<group>"; };
 		E3E6297C2D5FA8F200DAE50C /* ServiceWorkerDebuggableProxy.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ServiceWorkerDebuggableProxy.h; sourceTree = "<group>"; };
 		E3E6297D2D5FA8F200DAE50C /* ServiceWorkerDebuggableProxy.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ServiceWorkerDebuggableProxy.cpp; sourceTree = "<group>"; };
+		E3E844862F9B1D5100ABD79C /* PathsBlockedForSandboxExtensions.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PathsBlockedForSandboxExtensions.h; sourceTree = "<group>"; };
+		E3E844872F9BAC4E00ABD79C /* PathsBlockedForSandboxExtensions.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = PathsBlockedForSandboxExtensions.mm; sourceTree = "<group>"; };
 		E3E84BED2AE1AA5A0091B3C2 /* ExtensionKitSPI.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ExtensionKitSPI.h; sourceTree = "<group>"; };
 		E3EA8E7C2F3F61EA006CC6B3 /* SiteIsolatedActivity.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SiteIsolatedActivity.h; sourceTree = "<group>"; };
 		E3EA8E7D2F3F72BD006CC6B3 /* SiteIsolatedActivity.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = SiteIsolatedActivity.cpp; sourceTree = "<group>"; };
@@ -13416,6 +13419,8 @@
 				489B47702FED6E0100884EE7 /* LibAccessibilitySoftLink.h */,
 				489B47712FED6E0100884EE7 /* LibAccessibilitySoftLink.mm */,
 				2D1087621D2C641B00B85F82 /* LoadParametersCocoa.mm */,
+				E3E844862F9B1D5100ABD79C /* PathsBlockedForSandboxExtensions.h */,
+				E3E844872F9BAC4E00ABD79C /* PathsBlockedForSandboxExtensions.mm */,
 				2D440B8325EF235E00A98D87 /* PDFKitSoftLink.h */,
 				2D440B8225EF235E00A98D87 /* PDFKitSoftLink.mm */,
 				442E7BEA27B4581300C69AC1 /* RevealItem.h */,
@@ -22164,6 +22169,7 @@
 				41E242E026E0C908009A8C64 /* NetworkRTCUtilitiesCocoa.mm in Sources */,
 				FA5AAE9C2E6A217A00FE693D /* NetworkSoftLink.mm in Sources */,
 				DD4BDE7B2CA38213001A3339 /* ObjectiveCBlockConversions.swift in Sources */,
+				E3E844882F9BAC4E00ABD79C /* PathsBlockedForSandboxExtensions.mm in Sources */,
 				1CB9138F2E8C6D500002BCB7 /* PlatformUnifiedSource1-ARC.mm in Sources */,
 				1CB913932E8C71920002BCB7 /* PlatformUnifiedSource2-ARC.mm in Sources */,
 				A1B849382F3D9F02004256A1 /* PlaybackSessionInterfaceAVKit.mm in Sources */,
