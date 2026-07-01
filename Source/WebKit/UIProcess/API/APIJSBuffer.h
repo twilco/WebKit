@@ -23,31 +23,27 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "config.h"
-#include "WebUserContentControllerDataTypes.h"
+#pragma once
 
-#include <WebCore/SharedMemory.h>
+#include "APIObject.h"
 
-namespace WebKit {
-
-WebJSBufferData::WebJSBufferData(const RefPtr<WebCore::SharedMemory>& data, ContentWorldData&& worldData, const String& name)
-    : data(data)
-    , worldData(WTF::move(worldData))
-    , name(name) { }
-
-WebJSBufferData::WebJSBufferData(std::optional<WebCore::SharedMemoryHandle>&& handle, ContentWorldData&& worldData, String&& name)
-    : data(handle ? WebCore::SharedMemory::map(WTF::move(*handle), WebCore::SharedMemory::Protection::ReadOnly) : nullptr)
-    , worldData(WTF::move(worldData))
-    , name(WTF::move(name)) { }
-
-WebJSBufferData::~WebJSBufferData() = default;
-
-std::optional<WebCore::SharedMemoryHandle> WebJSBufferData::sharedMemoryHandle() const
-{
-    RefPtr sharedMemory = data;
-    if (!sharedMemory)
-        return std::nullopt;
-    return sharedMemory->createHandle(WebCore::SharedMemory::Protection::ReadOnly);
+namespace WebCore {
+class SharedMemory;
 }
 
-} // namespace WebKit
+namespace API {
+
+class JSBuffer final : public ObjectImpl<Object::Type::JSBuffer> {
+public:
+    explicit JSBuffer(Ref<WebCore::SharedMemory>&&);
+    virtual ~JSBuffer();
+
+    Ref<WebCore::SharedMemory> NODELETE sharedMemory();
+
+private:
+    Ref<WebCore::SharedMemory> m_sharedMemory;
+};
+
+} // namespace API
+
+SPECIALIZE_TYPE_TRAITS_API_OBJECT(JSBuffer);

@@ -148,6 +148,7 @@ public:
 #if ENABLE(INSPECTOR_EXTENSIONS)
         InspectorExtension,
 #endif
+        JSBuffer,
         KeyValueStorageManager,
         MediaCacheManager,
         MessageListener,

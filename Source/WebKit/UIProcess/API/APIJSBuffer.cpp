@@ -24,30 +24,20 @@
  */
 
 #include "config.h"
-#include "WebUserContentControllerDataTypes.h"
+#include "APIJSBuffer.h"
 
 #include <WebCore/SharedMemory.h>
 
-namespace WebKit {
+namespace API {
 
-WebJSBufferData::WebJSBufferData(const RefPtr<WebCore::SharedMemory>& data, ContentWorldData&& worldData, const String& name)
-    : data(data)
-    , worldData(WTF::move(worldData))
-    , name(name) { }
+JSBuffer::JSBuffer(Ref<WebCore::SharedMemory>&& sharedMemory)
+    : m_sharedMemory(WTF::move(sharedMemory)) { }
 
-WebJSBufferData::WebJSBufferData(std::optional<WebCore::SharedMemoryHandle>&& handle, ContentWorldData&& worldData, String&& name)
-    : data(handle ? WebCore::SharedMemory::map(WTF::move(*handle), WebCore::SharedMemory::Protection::ReadOnly) : nullptr)
-    , worldData(WTF::move(worldData))
-    , name(WTF::move(name)) { }
-
-WebJSBufferData::~WebJSBufferData() = default;
-
-std::optional<WebCore::SharedMemoryHandle> WebJSBufferData::sharedMemoryHandle() const
+Ref<WebCore::SharedMemory> JSBuffer::sharedMemory()
 {
-    RefPtr sharedMemory = data;
-    if (!sharedMemory)
-        return std::nullopt;
-    return sharedMemory->createHandle(WebCore::SharedMemory::Protection::ReadOnly);
+    return m_sharedMemory;
 }
 
-} // namespace WebKit
+JSBuffer::~JSBuffer() = default;
+
+} // namespace API

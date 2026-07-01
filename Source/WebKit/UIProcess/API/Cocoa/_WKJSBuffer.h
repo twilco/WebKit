@@ -23,31 +23,12 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "config.h"
-#include "WebUserContentControllerDataTypes.h"
+#import <WebKit/WKJSScriptingBuffer.h>
 
-#include <WebCore/SharedMemory.h>
+NS_ASSUME_NONNULL_BEGIN
 
-namespace WebKit {
+WK_CLASS_AVAILABLE(macos(26.4), ios(26.4), visionos(26.4))
+@interface _WKJSBuffer : WKJSScriptingBuffer
+@end
 
-WebJSBufferData::WebJSBufferData(const RefPtr<WebCore::SharedMemory>& data, ContentWorldData&& worldData, const String& name)
-    : data(data)
-    , worldData(WTF::move(worldData))
-    , name(name) { }
-
-WebJSBufferData::WebJSBufferData(std::optional<WebCore::SharedMemoryHandle>&& handle, ContentWorldData&& worldData, String&& name)
-    : data(handle ? WebCore::SharedMemory::map(WTF::move(*handle), WebCore::SharedMemory::Protection::ReadOnly) : nullptr)
-    , worldData(WTF::move(worldData))
-    , name(WTF::move(name)) { }
-
-WebJSBufferData::~WebJSBufferData() = default;
-
-std::optional<WebCore::SharedMemoryHandle> WebJSBufferData::sharedMemoryHandle() const
-{
-    RefPtr sharedMemory = data;
-    if (!sharedMemory)
-        return std::nullopt;
-    return sharedMemory->createHandle(WebCore::SharedMemory::Protection::ReadOnly);
-}
-
-} // namespace WebKit
+NS_ASSUME_NONNULL_END

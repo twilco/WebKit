@@ -28,6 +28,7 @@
 
 #include "APIArray.h"
 #include "APIContentWorld.h"
+#include "APIJSBuffer.h"
 #include "APIUserScript.h"
 #include "APIUserStyleSheet.h"
 #include "InjectUserScriptImmediately.h"
@@ -154,7 +155,7 @@ UserContentControllerParameters WebUserContentControllerProxy::parametersForProc
     Vector<WebJSBufferData> buffers;
     for (auto& [pair, buffer] : m_buffers) {
         if (RefPtr world = API::ContentWorld::worldForIdentifier(pair.first))
-            buffers.append(WebJSBufferData { buffer, world->worldDataForProcess(process), pair.second });
+            buffers.append(WebJSBufferData { buffer->sharedMemory(), world->worldDataForProcess(process), pair.second });
     }
 
     auto messageHandlers = WTF::map(m_scriptMessageHandlers, [&](auto entry) {
@@ -451,11 +452,11 @@ void WebUserContentControllerProxy::removeAllContentRuleLists()
 }
 #endif
 
-void WebUserContentControllerProxy::addJSBuffer(Ref<WebCore::SharedMemory>&& buffer, API::ContentWorld& world, const String& name)
+void WebUserContentControllerProxy::addJSBuffer(API::JSBuffer& buffer, API::ContentWorld& world, const String& name)
 {
     m_buffers.set({ world.identifier(), name }, buffer);
     for (Ref process : m_processes)
-        process->send(Messages::WebUserContentController::AddJSBuffer(WebJSBufferData { buffer, world.worldDataForProcess(process), name }), identifier());
+        process->send(Messages::WebUserContentController::AddJSBuffer(WebJSBufferData { buffer.sharedMemory(), world.worldDataForProcess(process), name }), identifier());
 }
 
 void WebUserContentControllerProxy::removeJSBuffer(API::ContentWorld& world, const String& name)

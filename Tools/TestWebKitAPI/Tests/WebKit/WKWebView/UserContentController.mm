@@ -38,6 +38,7 @@
 #import <WebKit/WKContentWorld.h>
 #import <WebKit/WKContentWorldConfiguration.h>
 #import <WebKit/WKContentWorldPrivate.h>
+#import <WebKit/WKJSScriptingBuffer.h>
 #import <WebKit/WKJSSerializedNode.h>
 #import <WebKit/WKProcessPoolPrivate.h>
 #import <WebKit/WKScriptMessage.h>
@@ -2076,7 +2077,7 @@ TEST(WKUserContentController, MessageHandlerInjectsWebKitNamespace)
 
 TEST(WKUserContentController, JSBufferInjectsWebKitNamespace)
 {
-    RetainPtr buffer = [NSData dataWithBytes:"abc" length:3];
+    RetainPtr buffer = adoptNS([[WKJSScriptingBuffer alloc] initWithData:[NSData dataWithBytes:"abc" length:3]]);
     RetainPtr configuration = adoptNS([WKWebViewConfiguration new]);
     [[configuration userContentController] addBuffer:buffer.get() name:@"testBuffer" contentWorld:WKContentWorld.pageWorld];
 

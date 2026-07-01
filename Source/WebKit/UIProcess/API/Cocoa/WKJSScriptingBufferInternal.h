@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Apple Inc. All rights reserved.
+ * Copyright (C) 2025-2026 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -23,31 +23,22 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "config.h"
-#include "WebUserContentControllerDataTypes.h"
-
-#include <WebCore/SharedMemory.h>
+#import "APIJSBuffer.h"
+#import "WKJSScriptingBuffer.h"
+#import "WKObject.h"
+#import "_WKJSBuffer.h"
+#import <wtf/AlignedStorage.h>
 
 namespace WebKit {
 
-WebJSBufferData::WebJSBufferData(const RefPtr<WebCore::SharedMemory>& data, ContentWorldData&& worldData, const String& name)
-    : data(data)
-    , worldData(WTF::move(worldData))
-    , name(name) { }
+template<> struct WrapperTraits<API::JSBuffer> {
+    using WrapperClass = _WKJSBuffer;
+};
 
-WebJSBufferData::WebJSBufferData(std::optional<WebCore::SharedMemoryHandle>&& handle, ContentWorldData&& worldData, String&& name)
-    : data(handle ? WebCore::SharedMemory::map(WTF::move(*handle), WebCore::SharedMemory::Protection::ReadOnly) : nullptr)
-    , worldData(WTF::move(worldData))
-    , name(WTF::move(name)) { }
-
-WebJSBufferData::~WebJSBufferData() = default;
-
-std::optional<WebCore::SharedMemoryHandle> WebJSBufferData::sharedMemoryHandle() const
-{
-    RefPtr sharedMemory = data;
-    if (!sharedMemory)
-        return std::nullopt;
-    return sharedMemory->createHandle(WebCore::SharedMemory::Protection::ReadOnly);
 }
 
-} // namespace WebKit
+@interface WKJSScriptingBuffer () <WKObject> {
+@package
+    AlignedStorage<API::JSBuffer> _buffer;
+}
+@end
