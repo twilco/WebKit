@@ -343,3 +343,8 @@ webkit.org/b/318267 [ ios ] TestWebKitAPI.WebAuthenticationPanel.PanelTwice [ Sk
 webkit.org/b/318267 [ ios ] TestWebKitAPI.WebAuthenticationPanel.GetAssertionPinInvalidErrorAndRetry [ Skip ]
 webkit.org/b/318267 [ ios ] TestWebKitAPI.WebAuthenticationPanel.NullPanelHidSuccess [ Skip ]
 webkit.org/b/318267 [ ios ] TestWebKitAPI.WebAuthenticationPanel.GetAssertionInternalUVPinFallback [ Skip ]
+
+# webkit.org/b/318265 [DEBUG] 3x TestWebKitAPI.WKWebExtensionAPIDeclarativeNetRequest.* (api-test) are constant timeouts
+webkit.org/b/318265 [ mac debug ] TestWebKitAPI.WKWebExtensionAPIDeclarativeNetRequest.BlockedLoadTest [ Timeout ]
+webkit.org/b/318265 [ mac debug ] TestWebKitAPI.WKWebExtensionAPIDeclarativeNetRequest.UpdateEnabledRulesets [ Timeout ]
+webkit.org/b/318265 [ mac debug ] TestWebKitAPI.WKWebExtensionAPIDeclarativeNetRequest.UpdateEnabledRulesetsPerformsCompilation [ Timeout ]
