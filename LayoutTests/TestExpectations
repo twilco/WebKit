@@ -2978,11 +2978,8 @@ imported/w3c/web-platform-tests/svg/text/reftests/text-font-face-load-image.html
 # textLength. Pinned here until the spacing-mode follow-up patch lands.
 imported/w3c/web-platform-tests/svg/text/reftests/textLength-list-y-spacing.svg [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/svg/styling/css-linked-parameters/css-linked-parameters-precedence-1.html [ ImageOnlyFailure ]
-imported/w3c/web-platform-tests/svg/styling/css-linked-parameters/css-linked-parameters-precedence-2.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/svg/styling/css-linked-parameters/img-with-url-fragment-identifiers-1.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/svg/styling/css-linked-parameters/img-with-url-fragment-identifiers-2.html [ ImageOnlyFailure ]
-imported/w3c/web-platform-tests/svg/styling/css-linked-parameters/img-with-url-function-1.html [ ImageOnlyFailure ]
-imported/w3c/web-platform-tests/svg/styling/css-linked-parameters/img-with-url-function-2.html [ ImageOnlyFailure ]
 
 imported/w3c/web-platform-tests/svg/styling/css-linked-parameters/link-parameters-currentcolor-typed.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/svg/animations/scripted/syncbase-after-removal.html [ Skip ]
@@ -7890,7 +7887,6 @@ imported/w3c/web-platform-tests/svg/struct/reftests/use-inheritance-001.svg [ Im
 imported/w3c/web-platform-tests/svg/struct/reftests/use-inheritance-nth-child-of.svg [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/svg/struct/reftests/use-inheritance-nth-last-child-of.svg [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/svg/struct/reftests/gradient-in-symbol.svg [ ImageOnlyFailure ]
-imported/w3c/web-platform-tests/svg/struct/reftests/outer-svg-transform.svg [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/svg/struct/reftests/inner-svg-transform.svg [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/svg/struct/reftests/inner-svg-transform-and-viewbox.svg [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/svg/struct/reftests/inner-svg-rotate-transform.svg [ ImageOnlyFailure ]

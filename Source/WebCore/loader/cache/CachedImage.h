@@ -58,7 +58,7 @@ public:
     bool currentFrameKnownToBeOpaque(const RenderElement*);
     bool currentFrameIsComplete(const RenderElement*);
 
-    std::pair<WeakPtr<Image>, float> brokenImage(float deviceScaleFactor) const; // Returns an image and the image's resolution scale factor.
+    std::pair<WeakPtr<BitmapImage>, float> brokenImage(float deviceScaleFactor) const; // Returns an image and the image's resolution scale factor.
     bool NODELETE willPaintBrokenImage() const;
 
     bool canRender(const RenderElement* renderer, float multiplier) { return !errorOccurred() && !imageSizeForRenderer(renderer, multiplier).isEmpty(); }
@@ -201,12 +201,6 @@ private:
     RefPtr<CachedImageObserver> m_imageObserver;
     RefPtr<Image> m_image;
     std::unique_ptr<SVGImageCache> m_svgImageCache;
-
-#if ENABLE(AX_CUSTOM_COLOR_MODE)
-    std::optional<bool> m_axCustomColorModeShouldAdjust;
-    RefPtr<NativeImage> m_axCustomColorModeAdjustedTile;
-    FloatSize m_axCustomColorModeAdjustedTileSize;
-#endif
 
     MonotonicTime m_lastUpdateImageDataTime;
 

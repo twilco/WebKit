@@ -143,6 +143,7 @@
 #include "VelocityData.h"
 #include "VisualViewport.h"
 #include "WheelEventTestMonitor.h"
+#include <span>
 #include <wtf/HexNumber.h>
 #include <wtf/MemoryPressureHandler.h>
 #include <wtf/Ref.h>
@@ -4647,7 +4648,7 @@ void LocalFrameView::scheduleScrollToAnchorAndTextFragment()
     ASSERT(document);
 
     m_scheduledToScrollToAnchor = true;
-    document->eventLoop().queueTask(TaskSource::DOMManipulation, [weakThis = WeakPtr { *this }] {
+    protect(document->eventLoop())->queueTask(TaskSource::DOMManipulation, [weakThis = WeakPtr { *this }] {
         RefPtr protectedThis = weakThis.get();
         if (!protectedThis)
             return;
@@ -4733,7 +4734,7 @@ void LocalFrameView::scrollToPendingTextFragmentRange()
 
     auto range = *m_pendingTextFragmentIndicatorRange;
     auto rangeText = plainText(range);
-    if (m_pendingTextFragmentIndicatorText != plainText(range))
+    if (m_pendingTextFragmentIndicatorText != rangeText)
         return;
 
     LOG_WITH_STREAM(Scrolling, stream << *this << " scrollToPendingTextFragmentRange() " << range);
@@ -6078,8 +6079,6 @@ void LocalFrameView::updateLayoutAndStyleIfNeededRecursive(OptionSet<LayoutOptio
     ASSERT(!needsStyleRecalc());
     ASSERT(!needsLayout());
 }
-
-#include <span>
 
 template<typename CharacterType>
 static size_t nonWhitespaceLength(std::span<const CharacterType> characters)
