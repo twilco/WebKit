@@ -100,7 +100,7 @@ static MTLBlendFactor NODELETE blendFactor(WGPUBlendFactor factor)
     }
 }
 
-static MTLColorWriteMask NODELETE colorWriteMask(WGPUColorWriteMaskFlags mask)
+static MTLColorWriteMask NODELETE colorWriteMask(WGPUColorWriteMask mask)
 {
     MTLColorWriteMask mtlMask = MTLColorWriteMaskNone;
 
@@ -774,9 +774,9 @@ static WGPUSamplerBindingType NODELETE convertSamplerBindingType(WGSL::SamplerBi
     }
 }
 
-static WGPUShaderStageFlags NODELETE convertVisibility(const OptionSet<WGSL::ShaderStage>& visibility)
+static WGPUShaderStage NODELETE convertVisibility(const OptionSet<WGSL::ShaderStage>& visibility)
 {
-    WGPUShaderStageFlags flags = 0;
+    WGPUShaderStage flags = 0;
     if (visibility & WGSL::ShaderStage::Vertex)
         flags |= WGPUShaderStage_Vertex;
     if (visibility & WGSL::ShaderStage::Fragment)
@@ -2145,7 +2145,7 @@ id<MTLRenderPipelineState> RenderPipeline::icbRenderPipelineState() const
 
 #pragma mark WGPU Stubs
 
-void NODELETE wgpuRenderPipelineReference(WGPURenderPipeline renderPipeline)
+void NODELETE wgpuRenderPipelineAddRef(WGPURenderPipeline renderPipeline)
 {
     WebGPU::fromAPI(renderPipeline).ref();
 }

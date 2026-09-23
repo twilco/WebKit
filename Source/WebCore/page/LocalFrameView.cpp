@@ -2660,7 +2660,7 @@ std::pair<FixedContainerEdges, WeakElementEdges> LocalFrameView::fixedContainerE
     static constexpr auto minimumOpacityThresholdToClampToSolidColor = 0.75;
 
     auto pageBackgroundColor = page->pageExtendedBackgroundColor();
-    auto blendAgainstPageBackground = [pageBackgroundColor](const Color& color) {
+    auto blendAgainstPageBackground = [&pageBackgroundColor](const Color& color) {
         if (color.isOpaque())
             return color;
 
@@ -2969,7 +2969,7 @@ bool LocalFrameView::useDarkAppearance() const
         return renderer->useDarkAppearance();
 #endif
     if (RefPtr document = m_frame->document())
-        return document->useDarkAppearance(static_cast<const Style::ComputedStyle*>(nullptr));
+        return document->useDarkAppearance(nullptr);
     return false;
 }
 
@@ -2980,7 +2980,7 @@ OptionSet<StyleColorOptions> LocalFrameView::styleColorOptions() const
         return renderer->styleColorOptions();
 #endif
     if (RefPtr document = m_frame->document())
-        return document->styleColorOptions(static_cast<const Style::ComputedStyle*>(nullptr));
+        return document->styleColorOptions(nullptr);
     return { };
 }
 
@@ -3592,6 +3592,8 @@ bool LocalFrameView::scrollRectToVisible(const LayoutRect& absoluteRect, const R
             adjustedRect = layer->ensureLayerScrollableArea()->scrollRectToVisible(adjustedRect, adjustedOptions);
             if (adjustedOptions.visibilityCheckRect)
                 adjustedOptions.visibilityCheckRect->setLocation(adjustedRect.location());
+            if (options.container == ScrollIntoViewContainer::Nearest)
+                return true;
         }
         // FIXME: Make scroll adjustments work for more than just fixedpos elements.
         if (insideFixed)
@@ -3660,7 +3662,10 @@ void LocalFrameView::scrollRectToVisibleInChildView(const LayoutRect& absoluteRe
     // See https://bugs.webkit.org/show_bug.cgi?id=205059
     setScrollPosition(scrollPosition, scrollPositionChangeOptionsForElement(*this, element.get(), options));
 
-    if (options.shouldAllowCrossOriginScrolling == ShouldAllowCrossOriginScrolling::No && !safeToPropagateScrollToParent()) 
+    if (options.container == ScrollIntoViewContainer::Nearest)
+        return;
+
+    if (options.shouldAllowCrossOriginScrolling == ShouldAllowCrossOriginScrolling::No && !safeToPropagateScrollToParent())
         return;
 
     // FIXME: ideally need to determine if this <iframe> is inside position:fixed.
@@ -4869,13 +4874,13 @@ void LocalFrameView::performPostLayoutTasks()
     LOG(Layout, "LocalFrameView %p performPostLayoutTasks", this);
     updateHasReachedSignificantRenderedTextThreshold();
 
+    if (!layoutContext().isLayoutNested() && m_frame->document()->documentElement())
+        fireLayoutRelatedMilestonesIfNeeded();
+
 #if ENABLE(AX_CUSTOM_COLOR_MODE)
     if (CheckedPtr renderView = this->renderView())
         renderView->adjustAXCustomColorModeAfterLayout();
 #endif
-
-    if (!layoutContext().isLayoutNested() && m_frame->document()->documentElement())
-        fireLayoutRelatedMilestonesIfNeeded();
 
 #if PLATFORM(IOS_FAMILY)
     // Only send layout-related delegate callbacks synchronously for the main frame to
@@ -6083,15 +6088,10 @@ void LocalFrameView::updateLayoutAndStyleIfNeededRecursive(OptionSet<LayoutOptio
 template<typename CharacterType>
 static size_t nonWhitespaceLength(std::span<const CharacterType> characters)
 {
-    size_t result = characters.size();
-    for (auto character : characters) {
-        if (isASCIIWhitespace(character))
-            --result;
-    }
-    return result;
+    return characters.size() - WTF::countMatchedCharacters<CharacterType, ' ', '\t', '\n', '\f', '\r'>(characters);
 }
 
-void LocalFrameView::incrementVisuallyNonEmptyCharacterCountSlowCase(const String& inlineText)
+SUPPRESS_NODELETE void LocalFrameView::incrementVisuallyNonEmptyCharacterCountSlowCase(const String& inlineText)
 {
     if (inlineText.is8Bit())
         m_visuallyNonEmptyCharacterCount += nonWhitespaceLength(inlineText.span8());
@@ -6217,8 +6217,13 @@ void LocalFrameView::checkAndDispatchDidReachVisuallyNonEmptyState()
         return;
 
     m_contentQualifiesAsVisuallyNonEmpty = true;
-    if (m_frame->isRootFrame())
+    if (m_frame->isRootFrame()) {
+#if ENABLE(AX_CUSTOM_COLOR_MODE)
+        if (RefPtr page = m_frame->page())
+            page->didReachVisuallyNonEmptyState();
+#endif
         m_frame->loader().didReachVisuallyNonEmptyState();
+    }
 }
 
 bool LocalFrameView::hasContentfulDescendants() const

@@ -124,6 +124,10 @@
 #include "TypedElementDescendantIteratorInlines.h"
 #endif
 
+#if ENABLE(SMART_IMAGE_RESIZER)
+#include <WebKitAdditions/RenderBoxAdditions.cpp>
+#endif
+
 namespace WebCore {
 
 WTF_MAKE_TZONE_ALLOCATED_IMPL(RenderBox);
@@ -404,6 +408,14 @@ static void pushSpatialPortalProperties(Element& element, const RenderBox& box)
     }
 }
 
+#if ENABLE(MODEL_ELEMENT_ENVIRONMENT_MAP)
+static void notifyEnvironmentMapStyleDidChange(Element& element)
+{
+    if (CheckedPtr controller = element.spatialPortalController())
+        controller->environmentMapStyleDidChange();
+}
+#endif
+
 static void updateSpatialPortalController(Element& element)
 {
     bool hadController = element.establishesSpatialPortal();
@@ -416,6 +428,9 @@ static void updateSpatialPortalController(Element& element)
 
     if (box && hadController != element.establishesSpatialPortal()) {
         pushSpatialPortalProperties(element, *box);
+#if ENABLE(MODEL_ELEMENT_ENVIRONMENT_MAP)
+        notifyEnvironmentMapStyleDidChange(element);
+#endif
 
         if (CheckedPtr layer = box->layer())
             layer->setNeedsCompositingConfigurationUpdate();
@@ -456,6 +471,11 @@ void RenderBox::styleDidChange(Style::Difference diff, const Style::ComputedStyl
             && parent() && !parent()->normalChildNeedsLayout())
             parent()->setChildNeedsLayout();
     }
+
+#if ENABLE(SMART_IMAGE_RESIZER)
+    if (imageResizerNeedsUpdateDueToStyleChange(oldStyle, newStyle))
+        view().setSmartImageResizerNeedsUpdate();
+#endif
 
     if (RenderBlock::hasPercentHeightContainerMap() && firstChild()
         && oldHorizontalWritingMode != isHorizontalWritingMode())
@@ -557,8 +577,13 @@ void RenderBox::styleDidChange(Style::Difference diff, const Style::ComputedStyl
         if (oldSpatial != newStyle.spatial())
             spatialPortalStyleDidChange(*element);
 
-        if (newStyle.spatial() == SpatialType::Portal)
+        if (newStyle.spatial() == SpatialType::Portal) {
             pushSpatialPortalProperties(*element, *this);
+#if ENABLE(MODEL_ELEMENT_ENVIRONMENT_MAP)
+            if (!oldStyle || oldStyle->environmentMap() != newStyle.environmentMap())
+                notifyEnvironmentMapStyleDidChange(*element);
+#endif
+        }
     }
 #endif
 }

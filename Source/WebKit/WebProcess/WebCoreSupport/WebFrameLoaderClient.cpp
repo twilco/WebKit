@@ -169,6 +169,7 @@ std::optional<NavigationActionData> WebFrameLoaderClient::navigationActionData(c
         navigationAction.sourceBackForwardItemIdentifier(),
         navigationAction.lockHistory(),
         navigationAction.lockBackForwardList(),
+        navigationAction.navigationHistoryBehavior(),
         clientRedirectSourceForHistory,
         sandboxFlags,
         ReferrerPolicy::EmptyString,
@@ -187,6 +188,7 @@ std::optional<NavigationActionData> WebFrameLoaderClient::navigationActionData(c
         request,
         request.url().isValid() ? String() : request.url().string(),
         requester,
+        navigationAction.pendingDispatchNavigateEventIdentifier(),
     };
 }
 
@@ -236,7 +238,7 @@ void WebFrameLoaderClient::dispatchDecidePolicyForNavigationAction(const Navigat
             }
 
             auto [policyDecision] = sendResult.takeReply();
-            WebFrameLoaderClient_RELEASE_LOG(WebFrameLoaderClientDispatchDecidePolicyForNavigationActionGotPolicyActionFromSyncIpc, toString(policyDecision.policyAction).characters());
+            WebFrameLoaderClient_RELEASE_LOG(WebFrameLoaderClientDispatchDecidePolicyForNavigationActionGotPolicyActionFromSyncIpc, toString(policyDecision.policyAction));
             m_frame->didReceivePolicyDecision(listenerID, PolicyDecision { policyDecision.isNavigatingToAppBoundDomain, policyDecision.policyAction, { }, policyDecision.downloadID });
             return;
         }
@@ -251,7 +253,7 @@ void WebFrameLoaderClient::dispatchDecidePolicyForNavigationAction(const Navigat
         if (!frame)
             return;
 
-        RELEASE_LOG_FORWARDABLE(Network, WebFrameLoaderClientDispatchDecidePolicyForNavigationActionGotPolicyActionFromAsyncIpc, frame->frameID().toUInt64(), webPageID, toString(policyDecision.policyAction).characters());
+        RELEASE_LOG_FORWARDABLE(Network, WebFrameLoaderClientDispatchDecidePolicyForNavigationActionGotPolicyActionFromAsyncIpc, frame->frameID().toUInt64(), webPageID, toString(policyDecision.policyAction));
 
         frame->didReceivePolicyDecision(listenerID, WTF::move(policyDecision));
     });

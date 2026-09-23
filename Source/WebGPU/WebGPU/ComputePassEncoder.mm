@@ -324,7 +324,7 @@ void ComputePassEncoder::dispatchIndirect(const Buffer& indirectBuffer, uint64_t
 
     auto indirectOffsetSum = checkedSum<uint64_t>(indirectOffset, 3 * sizeof(uint32_t));
     if ((indirectOffset % 4) || !(indirectBuffer.usage() & WGPUBufferUsage_Indirect) || indirectOffsetSum.hasOverflowed() || (indirectOffsetSum.value() > indirectBuffer.initialSize())) {
-        makeInvalid([NSString stringWithFormat:@"GPUComputePassEncoder.dispatchIndirect: (indirectOffset(%llu) mod 4) || !(indirectBuffer.usage(%u) & WGPUBufferUsage_Indirect(%u)) || indirectOffsetSum.hasOverflowed(%d) || (indirectOffsetSum(%llu) > indirectBuffer.initialSize(%llu))", indirectOffset, indirectBuffer.usage(), WGPUBufferUsage_Indirect, indirectOffsetSum.hasOverflowed(), indirectOffsetSum.hasOverflowed() ? 0 : indirectOffsetSum.value(), indirectBuffer.initialSize()]);
+        makeInvalid([NSString stringWithFormat:@"GPUComputePassEncoder.dispatchIndirect: (indirectOffset(%llu) mod 4) || !(indirectBuffer.usage(%llu) & WGPUBufferUsage_Indirect(%llu)) || indirectOffsetSum.hasOverflowed(%d) || (indirectOffsetSum(%llu) > indirectBuffer.initialSize(%llu))", indirectOffset, indirectBuffer.usage(), WGPUBufferUsage_Indirect, indirectOffsetSum.hasOverflowed(), indirectOffsetSum.hasOverflowed() ? 0 : indirectOffsetSum.value(), indirectBuffer.initialSize()]);
         return;
     }
 
@@ -569,7 +569,7 @@ id<MTLComputeCommandEncoder> ComputePassEncoder::computeCommandEncoder() const
 
 #pragma mark WGPU Stubs
 
-void NODELETE wgpuComputePassEncoderReference(WGPUComputePassEncoder computePassEncoder)
+void NODELETE wgpuComputePassEncoderAddRef(WGPUComputePassEncoder computePassEncoder)
 {
     WebGPU::fromAPI(computePassEncoder).ref();
 }

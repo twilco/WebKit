@@ -53,6 +53,7 @@
 #include <WebCore/OwnerPermissionsPolicyData.h>
 #include <WebCore/PageIdentifier.h>
 #include <WebCore/PageOverlay.h>
+#include <WebCore/PendingNavigateEventIdentifier.h>
 #include <WebCore/PlatformLayerIdentifier.h>
 #include <WebCore/PlaybackTargetClientContextIdentifier.h>
 #include <WebCore/PluginData.h>
@@ -1802,6 +1803,10 @@ public:
     void sampledPageTopColorChanged() { m_pendingSampledPageTopColorChange = true; }
     void flushPendingSampledPageTopColorChange();
 
+#if __has_include(<WebKitAdditions/WebPageAdditions.h>)
+#include <WebKitAdditions/WebPageAdditions.h>
+#endif
+
 #if ENABLE(MODEL_ELEMENT_IMMERSIVE)
     void allowImmersiveElement(CompletionHandler<void(bool)>&&);
     void presentImmersiveElement(const WebCore::LayerHostingContextIdentifier, CompletionHandler<void(bool)>&&);
@@ -2370,6 +2375,7 @@ private:
 
     // Actions
     void tryClose(CompletionHandler<void(bool)>&&);
+    void dispatchPendingNavigateEventForProcessSwap(WebCore::FrameIdentifier, WebCore::PendingNavigateEventIdentifier, CompletionHandler<void(bool)>&&);
     void dispatchCrossOriginBeforeUnloadCheckForFrame(WebCore::FrameIdentifier, WebCore::SecurityOriginData&&);
     void platformDidReceiveLoadParameters(const LoadParameters&);
     void createProvisionalFrame(ProvisionalFrameCreationParameters&&);

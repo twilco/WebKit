@@ -1349,7 +1349,7 @@ using WebCore::ScrollPosition = WebCore::IntPoint;
     bool ownerHasRenderer();
     WebCore::TransformationMatrix childFrameOwnerToRootContentTransform();
     WebCore::TransformationMatrix absoluteToChildFrameOwnerLocalTransform();
-    float usedZoom();
+    float frameScaleFactor();
     WebCore::LayoutPoint contentBoxLocation();
     OptionSet<WebCore::FrameOwnerElementAppearance> ownerElementAppearance();
 };
@@ -1641,6 +1641,9 @@ enum class WebCore::PixelFormat : uint8_t {
 #if ENABLE(PIXEL_FORMAT_RGBA16F)
     RGBA16F,
 #endif
+#if ENABLE(PIXEL_FORMAT_RGBA16)
+    RGBA16,
+#endif
 };
 
 enum class WebCore::AdjustViewSize : bool;
@@ -1774,12 +1777,27 @@ struct WebCore::EventTrackingRegions {
 
 enum class WebCore::HasInsecureContent : bool
 
+header: <WebCore/ViewportProximityInfo.h>
+enum class WebCore::ViewportRelation : uint8_t {
+    Intersecting,
+    Offscreen,
+    ClippedByAncestor,
+};
+
+header: <WebCore/ViewportProximityInfo.h>
+struct WebCore::ViewportProximityInfo {
+    WebCore::ViewportRelation relation;
+    float viewportSizedDistance;
+    float viewportCoverage;
+}
+
 struct WebCore::TextManipulationItem {
     Markable<WebCore::FrameIdentifier> frameID;
     bool isSubframe;
     bool isCrossSiteSubframe;
     Markable<WebCore::TextManipulationItemIdentifier> identifier;
     Vector<WebCore::TextManipulationToken> tokens;
+    std::optional<WebCore::ViewportProximityInfo> viewportProximityInfo;
 }
 
 header: <WebCore/TextManipulationToken.h>
@@ -4036,6 +4054,14 @@ enum class WebCore::NavigationUpgradeToHTTPSBehavior : uint8_t {
     Disabled,
     HTTPFallback,
     BasedOnPolicy
+};
+
+header: <WebCore/NavigationHistoryBehavior.h>
+enum class WebCore::NavigationHistoryBehavior : uint8_t {
+    Auto,
+    Push,
+    Replace,
+    Reload
 };
 
 header: <WebCore/NavigationScheduler.h>
@@ -6712,6 +6738,8 @@ using WebCore::SharedMemory::Handle = WebCore::SharedMemoryHandle
 using WebCore::ServiceWorkerOrClientIdentifier = Variant<WebCore::ScriptExecutionContextIdentifier, WebCore::ServiceWorkerIdentifier>
 
 enum class WebCore::RequiresClipToRect : bool
+
+enum class WebCore::ShouldDiscardAlpha : bool
 
 enum class WebCore::HighlightVisibility : bool
 

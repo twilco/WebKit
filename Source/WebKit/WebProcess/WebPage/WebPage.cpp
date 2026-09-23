@@ -2435,6 +2435,12 @@ void WebPage::close(CompletionHandler<void()>&& completionHandler)
     completionHandler();
 }
 
+void WebPage::dispatchPendingNavigateEventForProcessSwap(WebCore::FrameIdentifier frameID, WebCore::PendingNavigateEventIdentifier pendingNavigateEventID, CompletionHandler<void(bool)>&& completionHandler)
+{
+    RefPtr webFrame = WebProcess::singleton().webFrame(frameID);
+    completionHandler(webFrame && !webFrame->dispatchPendingNavigateEventAfterNavigationPolicy(pendingNavigateEventID));
+}
+
 void WebPage::tryClose(CompletionHandler<void(bool)>&& completionHandler)
 {
     RefPtr coreFrame = m_mainFrame->coreLocalFrame();
@@ -2633,10 +2639,12 @@ void WebPage::loadRequest(LoadParameters&& loadParameters)
     frameLoadRequest.setShouldTreatAsContinuingLoad(loadParameters.shouldTreatAsContinuingLoad);
     frameLoadRequest.setLockHistory(loadParameters.lockHistory);
     frameLoadRequest.setLockBackForwardList(loadParameters.lockBackForwardList);
+    frameLoadRequest.setNavigationHistoryBehavior(loadParameters.navigationHistoryBehavior);
     frameLoadRequest.setClientRedirectSourceForHistory(WTF::move(loadParameters.clientRedirectSourceForHistory));
     frameLoadRequest.setIsHandledByAboutSchemeHandler(loadParameters.isHandledByAboutSchemeHandler);
     if (loadParameters.isRequestFromClientOrUserInput)
         frameLoadRequest.setIsRequestFromClientOrUserInput();
+    frameLoadRequest.setHasCrossOriginRedirect(loadParameters.hasCrossOriginRedirect);
     if (loadParameters.advancedPrivacyProtections)
         frameLoadRequest.setAdvancedPrivacyProtections(*loadParameters.advancedPrivacyProtections);
     if (loadParameters.originalRequest)
@@ -8688,6 +8696,10 @@ void WebPage::flushPendingSampledPageTopColorChange()
 
     send(Messages::WebPageProxy::SampledPageTopColorChanged(protect(corePage())->sampledPageTopColor()));
 }
+
+#if __has_include(<WebKitAdditions/WebPageAdditionsImpl.cpp>)
+#include <WebKitAdditions/WebPageAdditionsImpl.cpp>
+#endif
 
 #if ENABLE(MODEL_ELEMENT_IMMERSIVE)
 void WebPage::allowImmersiveElement(CompletionHandler<void(bool)>&& completion)

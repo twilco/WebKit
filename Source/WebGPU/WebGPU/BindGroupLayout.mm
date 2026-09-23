@@ -149,7 +149,7 @@ static void addDescriptor(NSMutableArray<MTLArgumentDescriptor *> *arguments, MT
     [arguments addObject:stageDescriptor];
 }
 
-static bool NODELETE containsStage(WGPUShaderStageFlags stageBitfield, auto stage)
+static bool NODELETE containsStage(WGPUShaderStage stageBitfield, auto stage)
 {
     static_assert(1 == WGPUShaderStage_Vertex && 2 == WGPUShaderStage_Fragment && 4 == WGPUShaderStage_Compute, "Expect WGPUShaderStage to be a bitfield");
     return stageBitfield & (1 << static_cast<uint32_t>(stage));
@@ -201,7 +201,7 @@ Ref<BindGroupLayout> Device::createBindGroupLayout(const WGPUBindGroupLayoutDesc
     std::array<size_t, stageCount> sizeOfDynamicOffsets { };
     std::array<uint32_t, stageCount> bindingOffset { };
     std::array<uint32_t, stageCount> bufferCounts { };
-    std::array<HashMap<uint32_t, std::pair<std::array<uint32_t, stageCount>, WGPUShaderStageFlags>, DefaultHash<uint32_t>, WTF::UnsignedWithZeroKeyHashTraits<uint32_t>>, stageCount> slotForEntry;
+    std::array<HashMap<uint32_t, std::pair<std::array<uint32_t, stageCount>, WGPUShaderStage>, DefaultHash<uint32_t>, WTF::UnsignedWithZeroKeyHashTraits<uint32_t>>, stageCount> slotForEntry;
     const auto maxBindingIndex = limits().maxBindingsPerBindGroup;
     HashSet<uint32_t, DefaultHash<uint32_t>, WTF::UnsignedWithZeroKeyHashTraits<uint32_t>> usedBindingSlots;
     uint32_t dynamicUniformBuffers = 0;
@@ -777,7 +777,7 @@ const BindGroupLayout::ArgumentIndices& BindGroupLayout::argumentIndices(ShaderS
 
 #pragma mark WGPU Stubs
 
-void NODELETE wgpuBindGroupLayoutReference(WGPUBindGroupLayout bindGroupLayout)
+void NODELETE wgpuBindGroupLayoutAddRef(WGPUBindGroupLayout bindGroupLayout)
 {
     WebGPU::fromAPI(bindGroupLayout).ref();
 }

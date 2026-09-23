@@ -484,6 +484,10 @@
 #include "AcceleratedEffectStackUpdater.h"
 #endif
 
+#if __has_include(<WebKitAdditions/AXCustomColorModeController.h>)
+#include <WebKitAdditions/AXCustomColorModeController.h>
+#endif
+
 #define DOCUMENT_RELEASE_LOG(channel, fmt, ...) RELEASE_LOG(channel, "%p - [pageID=%" PRIu64 ", frameID=%" PRIu64 ", isMainFrame=%d] Document::" fmt, this, pageID() ? pageID()->toUInt64() : 0, frameID() ? frameID()->toUInt64() : 0, this->isTopDocument(), ##__VA_ARGS__)
 #define DOCUMENT_RELEASE_LOG_ERROR(channel, fmt, ...) RELEASE_LOG_ERROR(channel, "%p - [pageID=%" PRIu64 ", frameID=%" PRIu64 ", isMainFrame=%d] Document::" fmt, this, pageID() ? pageID()->toUInt64() : 0, frameID() ? frameID()->toUInt64() : 0, this->isTopDocument(), ##__VA_ARGS__)
 
@@ -10150,6 +10154,18 @@ void Document::adjustStyleColorOptionsIfNeeded(OptionSet<StyleColorOptions>&) co
 }
 #endif
 
+#if ENABLE(AX_CUSTOM_COLOR_MODE)
+
+bool Document::isAXCustomColorModeActive() const
+{
+    if (RefPtr page = this->page())
+        return page->isAXCustomColorModeActive();
+
+    return false;
+}
+
+#endif // ENABLE(AX_CUSTOM_COLOR_MODE)
+
 OptionSet<StyleColorOptions> Document::styleColorOptions(const Style::ComputedStyle* style) const
 {
     OptionSet<StyleColorOptions> options;
@@ -10176,6 +10192,12 @@ CompositeOperator Document::compositeOperatorForBackgroundColor(const Color& col
     // Mail on macOS uses a transparent view, and on iOS it is an opaque view. We need to
     // use different composite modes to get the right results in this case.
     return frameView->isTransparent() ? CompositeOperator::DestinationOut : CompositeOperator::DestinationIn;
+}
+
+bool Document::backgroundColorIsPunchedOut(const Color& color, const RenderElement& renderer) const
+{
+    auto compositeOperator = compositeOperatorForBackgroundColor(color, renderer);
+    return compositeOperator == CompositeOperator::DestinationIn || compositeOperator == CompositeOperator::DestinationOut;
 }
 
 void Document::didAssociateFormControl(Element& element)

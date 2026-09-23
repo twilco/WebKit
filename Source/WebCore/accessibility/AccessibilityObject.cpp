@@ -2100,9 +2100,13 @@ VisiblePositionRange AccessibilityObject::lineRangeForPosition(const VisiblePosi
         return { };
     }
 
-    // Move from the given visiblePosition forward until it hits the start of the next line or cross over a line break.
+    // Walk forward to the first position that is no longer on this line. Start the search
+    // one position back because with line-break: after-white-space, the start of the next line
+    // could be the same offset with downstream affinity.
     auto end = visiblePosition;
-    while (end.isNotNull() && inSameLine(end, visiblePosition)) {
+    if (auto previous = visiblePosition.previous(); inSameLine(previous, visiblePosition))
+        end = WTF::move(previous);
+    while (end.isNotNull() && startOfLine(end) == start) {
         auto next = end.next();
         if (next == end) {
             // Without this break, we would loop infinitely.
@@ -2491,6 +2495,26 @@ bool AccessibilityObject::contentEditableAttributeIsEnabled(Element& element)
     return contentEditableValue.isEmpty() || equalLettersIgnoringASCIICase(contentEditableValue, "true"_s) || equalLettersIgnoringASCIICase(contentEditableValue, "plaintext-only"_s);
 }
 
+// How many lines |laterPosition| sits below |earlierPosition|. Answers nothing when they are on
+// lines of different blocks, whose line boxes can't be reached from one another.
+static std::optional<int> lineCountBetween(const VisiblePosition& earlierPosition, const VisiblePosition& laterPosition)
+{
+    auto earlierLineBox = RenderedPosition(earlierPosition).lineBox();
+    auto laterLineBox = RenderedPosition(laterPosition).lineBox();
+    if (!earlierLineBox || !laterLineBox)
+        return std::nullopt;
+    if (earlierLineBox == laterLineBox)
+        return 0;
+
+    int lineCount = 0;
+    for (auto lineBox = laterLineBox; lineBox; lineBox = lineBox->previous()) {
+        ++lineCount;
+        if (lineBox->previous() == earlierLineBox)
+            return lineCount;
+    }
+    return std::nullopt;
+}
+
 int AccessibilityObject::lineForPosition(const VisiblePosition& visiblePos) const
 {
     if (visiblePos.isNull() || !node())
@@ -2501,18 +2525,28 @@ int AccessibilityObject::lineForPosition(const VisiblePosition& visiblePos) cons
     if (!containerNode->isShadowIncludingInclusiveAncestorOf(node()) && !node()->isShadowIncludingInclusiveAncestorOf(containerNode.get()))
         return -1;
 
-    int lineCount = -1;
+    int lineCount = 0;
     VisiblePosition currentVisiblePos = visiblePos;
     VisiblePosition savedVisiblePos;
 
     // move up until we get to the top
     // FIXME: This only takes us to the top of the rootEditableElement, not the top of the
     // top document.
-    do {
+    while (true) {
         savedVisiblePos = currentVisiblePos;
         currentVisiblePos = previousLinePosition(currentVisiblePos, 0, HasEditableAXRole);
-        ++lineCount;
-    } while (currentVisiblePos.isNotNull() && !(inSameLine(currentVisiblePos, savedVisiblePos)));
+        if (currentVisiblePos.isNull() || inSameLine(currentVisiblePos, savedVisiblePos))
+            break;
+        // Count lines rather than steps, because one step can cross more than one. The start of a
+        // line following an inline replaced element is the very same VisiblePosition as the one
+        // after that element, so it resolves onto the element's line:
+        //   ABCDE
+        //   [img]
+        //   |FGHIJ
+        // Stepping up from "FGHIJ" lands on the image's line, skipping the line "F" is on.
+        // A step into another block counts as the one line it moved.
+        lineCount += lineCountBetween(currentVisiblePos, savedVisiblePos).value_or(1);
+    }
 
     return lineCount;
 }
@@ -2982,9 +3016,14 @@ bool AccessibilityObject::replaceTextInRange(const String& replacementString, co
     // Also only do this when the field is in editing mode.
     Ref frame = renderer()->frame();
     if (element->shouldUseInputMethod()) {
-        uint64_t textLength = getLengthForTextRange();
-        uint64_t startIndex = std::min(range.location, textLength);
-        uint64_t endIndex = startIndex + std::min(range.length, textLength - startIndex);
+        // Don't clamp to getLengthForTextRange() here. It reports the value of a text control, and
+        // an editing host need not be one: a design-mode body carries no contenteditable attribute,
+        // so it measures as empty and every index would collapse to 0. visiblePositionForIndex()
+        // already lands an index past the end of the content at the end of it, so the only bound
+        // needed is the one the call itself can represent.
+        constexpr uint64_t maxIndex = std::numeric_limits<int>::max();
+        uint64_t startIndex = std::min<uint64_t>(range.location, maxIndex);
+        uint64_t endIndex = startIndex + std::min<uint64_t>(range.length, maxIndex - startIndex);
 
         auto start = visiblePositionForIndex(static_cast<int>(startIndex));
         std::optional insertionRange = makeSimpleRange(start, endIndex == startIndex ? start : visiblePositionForIndex(static_cast<int>(endIndex)));

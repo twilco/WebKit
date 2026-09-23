@@ -2012,7 +2012,7 @@ with open(sys.argv[2], 'wb') as f:
     string(REGEX MATCH "^([0-9]+)" _host_major "${_host_os_ver}")
     math(EXPR _target_macos_major "${_host_major} * 10000")
 
-    function(WEBKIT_IOS_XPC_SERVICE _target _bundle_identifier _info_plist _executable_name _xpc_entitlements)
+    function(WEBKIT_IOS_XPC_SERVICE _target _bundle_identifier _info_plist _executable_name)
         set(_service_dir ${WebKit_XPC_SERVICE_DIR}/${_bundle_identifier}.xpc)
         file(MAKE_DIRECTORY ${_service_dir})
 
@@ -2072,6 +2072,7 @@ with open(sys.argv[2], 'wb') as f:
                     "${_service_dir}"
                 COMMENT "Codesigning ${_bundle_identifier}.xpc (simulator)")
         else ()
+            get_property(_xpc_entitlements TARGET ${_target} PROPERTY CODE_SIGN_ENTITLEMENTS)
             add_custom_command(TARGET ${_target} POST_BUILD
                 COMMAND codesign --force --sign -
                     --timestamp=none --generate-entitlement-der
@@ -2087,21 +2088,18 @@ with open(sys.argv[2], 'wb') as f:
     WEBKIT_IOS_XPC_SERVICE(WebProcess
         "com.apple.WebKit.WebContent"
         ${WEBKIT_DIR}/WebProcess/EntryPoint/Cocoa/XPCService/WebContentService/Info-iOS.plist
-        ${WebProcess_OUTPUT_NAME}
-        ${WebProcess_CODE_SIGN_ENTITLEMENTS})
+        ${WebProcess_OUTPUT_NAME})
 
     WEBKIT_IOS_XPC_SERVICE(NetworkProcess
         "com.apple.WebKit.Networking"
         ${WEBKIT_DIR}/NetworkProcess/EntryPoint/Cocoa/XPCService/NetworkService/Info-iOS.plist
-        ${NetworkProcess_OUTPUT_NAME}
-        ${NetworkProcess_CODE_SIGN_ENTITLEMENTS})
+        ${NetworkProcess_OUTPUT_NAME})
 
     if (ENABLE_GPU_PROCESS)
         WEBKIT_IOS_XPC_SERVICE(GPUProcess
             "com.apple.WebKit.GPU"
             ${WEBKIT_DIR}/GPUProcess/EntryPoint/Cocoa/XPCService/GPUService/Info-iOS.plist
-            ${GPUProcess_OUTPUT_NAME}
-            ${GPUProcess_CODE_SIGN_ENTITLEMENTS})
+            ${GPUProcess_OUTPUT_NAME})
     endif ()
 
     function(WEBKIT_IOS_WEBCONTENT_VARIANT _variant)
@@ -2120,8 +2118,7 @@ with open(sys.argv[2], 'wb') as f:
         WEBKIT_IOS_XPC_SERVICE(${_target}
             "com.apple.WebKit.WebContent.${_variant}"
             ${WEBKIT_DIR}/WebProcess/EntryPoint/Cocoa/XPCService/WebContentService/Info-iOS.plist
-            ${_exec_name}
-            ${${_target}_CODE_SIGN_ENTITLEMENTS})
+            ${_exec_name})
     endfunction()
     WEBKIT_IOS_WEBCONTENT_VARIANT(EnhancedSecurity)
     WEBKIT_IOS_WEBCONTENT_VARIANT(CaptivePortal)
@@ -2551,24 +2548,79 @@ add_custom_command(
     VERBATIM
 )
 
-foreach (_header IN LISTS WebKit_PUBLIC_FRAMEWORK_HEADERS)
-    file(READ ${WEBKIT_DIR}/${_header} _contents)
-    # Only run headers through the replacement script if they actually contain
-    # a WKA import.
-    if (_contents MATCHES "#import <WebKitAdditions/.*\.h>")
-        get_filename_component(_name ${_header} NAME)
+# Headers which import WebKitAdditions fragments have to be run through the
+# replacement script rather than being copied verbatim. The processed copy takes
+# the source header's place in the list, so that the header maps resolve
+# <WebKit/Foo.h> to the copy with the additions spliced in rather than to the
+# source tree. WebKit's own sources are pointed back at the unprocessed headers
+# below.
+set(_webkitadditions_source_headers)
+set(_header_lists WebKit_PUBLIC_FRAMEWORK_HEADERS WebKit_PRIVATE_FRAMEWORK_HEADERS)
+set(_header_dirs WebKit_HEADERS_DIR WebKit_PRIVATE_HEADERS_DIR)
+foreach (_header_list _header_dir IN ZIP_LISTS _header_lists _header_dirs)
+    set(_updated_headers)
+    foreach (_header IN LISTS ${_header_list})
+        # Entries are relative to WEBKIT_DIR unless they are already absolute.
+        set(_src ${WEBKIT_DIR})
+        cmake_path(APPEND _src ${_header})
+        file(READ ${_src} _contents)
+        # Only run headers through the replacement script if they actually contain
+        # a WKA import.
+        if (NOT _contents MATCHES "#import <WebKitAdditions/.*\.h>")
+            list(APPEND _updated_headers ${_header})
+            continue ()
+        endif ()
+
+        cmake_path(GET _src FILENAME _name)
+        set(_dst ${${_header_dir}}/${_name})
         add_custom_command(
-            OUTPUT ${WebKit_HEADERS_DIR}/${_name}
+            OUTPUT ${_dst}
             COMMAND
                 env ${WEBKITADDITIONS_DEFINITIONS_FOR_HEADER_REPLACEMENT}
                     ${WEBKIT_DIR}/mac/replace-webkit-additions-includes.py
                     ${WebKitAdditions_FRAMEWORK_HEADERS_DIR} ${CMAKE_OSX_SYSROOT}
-                    ${WEBKIT_DIR}/${_header} ${WebKit_HEADERS_DIR}/${_name}
-            MAIN_DEPENDENCY ${WEBKIT_DIR}/${_header}
+                    ${_src} ${_dst}
+            MAIN_DEPENDENCY ${_src}
+            DEPENDS ${WEBKITADDITIONS_HEADERS_DEPENDENCIES}
             VERBATIM
         )
-    endif ()
+        list(APPEND _updated_headers ${_dst})
+        list(APPEND WebKit_WEBKITADDITIONS_HEADERS ${_dst})
+        list(APPEND _webkitadditions_source_headers ${_src})
+    endforeach ()
+    set(${_header_list} ${_updated_headers})
 endforeach ()
+
+if (WebKit_WEBKITADDITIONS_HEADERS)
+    # Everything reading these headers through a header map has to wait for the
+    # replacement to run, including targets that only link against WebKit.
+    add_custom_target(WebKit_ReplaceWebKitAdditionsIncludes ALL
+        DEPENDS ${WebKit_WEBKITADDITIONS_HEADERS})
+    list(APPEND WebKit_DEPENDENCIES WebKit_ReplaceWebKitAdditionsIncludes)
+    list(APPEND WebKit_INTERFACE_DEPENDENCIES WebKit_ReplaceWebKitAdditionsIncludes)
+
+    if (USE_HEADER_MAPS)
+        # WebKit's own sources are the exception: they have to keep seeing the
+        # unprocessed headers, the way the Xcode build's project header map points
+        # them at the source tree. A spliced-in fragment declares its API inside one
+        # of WebKit's own categories, while the WebKitAdditions .mm that implements
+        # it declares a category of its own and imports the same fragment into that,
+        # so a translation unit which sees both ends up with duplicate declarations
+        # and with properties whose implementation is in the wrong category.
+        #
+        # The targets built from this directory pick up the header maps through the
+        # directory's include directories, and `include_directories(BEFORE)`
+        # prepends, so the last caller wins. Defer the call to the end of the
+        # directory so this override is searched ahead of WebKit-framework-headers.
+        WEBKIT_WRITE_HEADER_MAP(WebKit
+            DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/WebKit-webkitadditions-source-headers.hmap
+            FILES ${_webkitadditions_source_headers}
+            QUOTED BRACKETED
+        )
+        cmake_language(DEFER DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} CALL include_directories BEFORE
+            ${CMAKE_CURRENT_BINARY_DIR}/WebKit-webkitadditions-source-headers.hmap)
+    endif ()
+endif ()
 
 # LINKER:-u forces a symbol reference so -dead_strip_dylibs won't prune the weak framework.
 target_link_options(WebKit PRIVATE

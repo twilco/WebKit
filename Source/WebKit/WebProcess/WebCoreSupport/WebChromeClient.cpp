@@ -424,6 +424,7 @@ RefPtr<Page> WebChromeClient::createWindow(LocalFrame& frame, const String& open
         std::nullopt, /* sourceBackForwardItemIdentifier */
         WebCore::LockHistory::No,
         WebCore::LockBackForwardList::No,
+        WebCore::NavigationHistoryBehavior::Auto,
         { }, /* clientRedirectSourceForHistory */
         frame.effectiveSandboxFlags(),
         frame.document()->referrerPolicy(),
@@ -442,6 +443,7 @@ RefPtr<Page> WebChromeClient::createWindow(LocalFrame& frame, const String& open
         originalRequest, /* request */
         originalRequest.url().isValid() ? String() : originalRequest.url().string(), /* invalidURLString */
         navigationAction.requester(), /* requester */
+        { }, /* pendingNavigateEventID */
     };
 
     auto sendResult = protect(webProcess.parentProcessConnection())->sendSync(Messages::WebPageProxy::CreateNewPage(windowFeatures, navigationActionData), page->identifier(), IPC::Timeout::infinity(), { IPC::SendSyncOption::MaintainOrderingWithAsyncMessages });
@@ -1809,6 +1811,10 @@ void WebChromeClient::sampledPageTopColorChanged() const
     if (auto* page = m_page.get())
         page->sampledPageTopColorChanged();
 }
+
+#if __has_include(<WebKitAdditions/WebChromeClientAdditions.cpp>)
+#include <WebKitAdditions/WebChromeClientAdditions.cpp>
+#endif
 
 #if ENABLE(MODEL_ELEMENT_IMMERSIVE)
 void WebChromeClient::allowImmersiveElement(CompletionHandler<void(bool)>&& completion) const

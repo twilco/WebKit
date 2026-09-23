@@ -1010,6 +1010,7 @@ set(WebCore_NON_SVG_IDL_FILES
     css/CSSConditionRule.idl
     css/CSSContainerRule.idl
     css/CSSCounterStyleRule.idl
+    css/CSSEnvironmentMapRule.idl
     css/CSSFontFaceDescriptors.idl
     css/CSSFontFaceRule.idl
     css/CSSFontFeatureValuesRule.idl
@@ -1479,6 +1480,7 @@ set(WebCore_NON_SVG_IDL_FILES
     page/Screen.idl
     page/ScreenOrientation.idl
     page/ScrollBehavior.idl
+    page/ScrollIntoViewContainer.idl
     page/ScrollIntoViewOptions.idl
     page/ScrollLogicalPosition.idl
     page/ScrollOptions.idl
@@ -3025,7 +3027,7 @@ set(SETTINGS_TEMPLATES
     ${WEBCORE_DIR}/Scripts/SettingsTemplates/InternalSettingsGenerated.h.erb
     ${WEBCORE_DIR}/Scripts/SettingsTemplates/Settings.cpp.erb
     ${WEBCORE_DIR}/Scripts/SettingsTemplates/Settings.h.erb)
-set(WTF_WEB_PREFERENCES ${WTF_SCRIPTS_DIR}/Preferences/UnifiedWebPreferences.yaml)
+set(WTF_WEB_PREFERENCES ${WTF_SCRIPTS_DIR}/Preferences/UnifiedWebPreferences.yaml ${WEB_PREFERENCES_ADDITIONS})
 set_source_files_properties(${WTF_WEB_PREFERENCES} PROPERTIES GENERATED TRUE)
 add_custom_command(
     OUTPUT ${WebCore_DERIVED_SOURCES_DIR}/Settings.h
@@ -3034,7 +3036,7 @@ add_custom_command(
        ${WebCore_DERIVED_SOURCES_DIR}/InternalSettingsGenerated.cpp
        ${WebCore_DERIVED_SOURCES_DIR}/InternalSettingsGenerated.idl
     MAIN_DEPENDENCY ${WEBCORE_DIR}/page/Settings.yaml
-    DEPENDS ${WEBCORE_DIR}/Scripts/GenerateSettings.rb ${SETTINGS_TEMPLATES} WTF_CopyPreferences ${WTF_WEB_PREFERENCES}
+    DEPENDS ${WEBCORE_DIR}/Scripts/GenerateSettings.rb ${SETTINGS_TEMPLATES} WTF_CopyPreferences ${WTF_WEB_PREFERENCES} ${WEBKITADDITIONS_HEADERS_DEPENDENCIES}
     COMMAND ${Ruby_EXECUTABLE} ${WEBCORE_DIR}/Scripts/GenerateSettings.rb --outputDir ${WebCore_DERIVED_SOURCES_DIR} --template "$<JOIN:${SETTINGS_TEMPLATES},;--template;>" ${WTF_WEB_PREFERENCES} ${WEBCORE_DIR}/page/Settings.yaml
     COMMAND_EXPAND_LISTS
     VERBATIM)

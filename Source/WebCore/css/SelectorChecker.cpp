@@ -747,6 +747,7 @@ static bool NODELETE canMatchHoverOrActiveInQuirksMode(const SelectorChecker::Lo
         }
         case CSSSelector::Match::Id:
         case CSSSelector::Match::Class:
+        case CSSSelector::Match::ClassPrefix:
         case CSSSelector::Match::Exact:
         case CSSSelector::Match::Set:
         case CSSSelector::Match::List:
@@ -858,6 +859,8 @@ bool SelectorChecker::checkOne(CheckingContext& checkingContext, LocalContext& c
         ASSERT(m_strictParsing);
         return element->hasClassName(selector.value());
     }
+    if (selector.match() == CSSSelector::Match::ClassPrefix)
+        return element->hasClassNamePrefix(selector.value());
 
     if (selector.match() == CSSSelector::Match::Id) {
         ASSERT(!selector.value().isNull());
@@ -1338,6 +1341,9 @@ bool SelectorChecker::checkOne(CheckingContext& checkingContext, LocalContext& c
 
         case CSSSelector::PseudoClass::InternalSelectPopover:
             return matchesSelectPopoverPseudoClass(element);
+
+        case CSSSelector::PseudoClass::InternalSelectPreferredSizeOne:
+            return matchesSelectPreferredSizeOnePseudoClass(element);
 
         case CSSSelector::PseudoClass::InternalUsesMenulist:
             return matchesUsesMenulistPseudoClass(element);

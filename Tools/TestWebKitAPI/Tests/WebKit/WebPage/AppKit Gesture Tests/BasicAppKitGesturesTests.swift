@@ -1232,6 +1232,31 @@ extension AppKitGesturesTests.Basic {
     }
 
     @Test(
+        .bug("https://webkit.org/b/324696", "Synthesized mouse events always report zero movementX|Y"),
+        arguments: [true, false]
+    )
+    func pressDragOverRangeInputReportsMovement(useNativeWidget: Bool) async throws {
+        try await dragAcrossSlider(useNativeWidget: useNativeWidget, verticalTravelFraction: 0.4)
+
+        let (travelX, travelY) = try await page.callJavaScript(
+            returning: (Double, Double).self
+        ) {
+            """
+            const moves = window.movementLog.filter(entry => entry.type === "pointermove");
+            const down = window.movementLog.find(entry => entry.type === "pointerdown");
+            const last = moves[moves.length - 1];
+            return [
+                last.clientX - down.clientX,
+                last.clientY - down.clientY,
+            ];
+            """
+        }
+
+        try #require(abs(travelX) > 10)
+        try #require(abs(travelY) > 10)
+    }
+
+    @Test(
         .bug("https://webkit.org/b/324040", "Cannot press and drag over some custom sliders"),
         arguments: SVGSliderVariant.dragCases
     )
@@ -1249,6 +1274,63 @@ extension AppKitGesturesTests.Basic {
             await page.waitForNextPresentationUpdate()
         }
         try await expectDragReachesContent(startingFrom: dragStart)
+    }
+
+    @Test(
+        .bug("https://webkit.org/b/324408", "A mouse drag starting just off a thin range input slider track does not move it"),
+        arguments: ThinSliderDragStart.allCases
+    )
+    func mouseDragOverThinRangeInputChangesValue(dragStart: ThinSliderDragStart) async throws {
+        let html = """
+            <style>
+                input[type=range] {
+                    -webkit-appearance: none;
+                    border: none;
+                    background-color: transparent;
+                    display: block;
+                    margin: 0;
+                    width: 232px;
+                }
+                input[type=range]::-webkit-slider-runnable-track {
+                    background: #888;
+                    border: none;
+                    height: .12rem;
+                }
+                input[type=range]::-webkit-slider-thumb {
+                    -webkit-appearance: none;
+                    border: 1px solid #333;
+                    border-radius: 50%;
+                    background: #fff;
+                    width: 12px;
+                    height: 12px;
+                    margin-top: -.38rem;
+                }
+            </style>
+            <body style="margin: 0; width: 4000px; height: 4000px;">
+                <div id="slider-box" style="margin: 100px 10px 0; padding: 28px 0; width: 252px;">
+                    <input id="slider" type="range" min="-4" max="4" step="0.1" value="0">
+                </div>
+                <script>
+                    const slider = document.getElementById("slider");
+                    window.sliderValue = Number(slider.value);
+                    window.sliderEvents = [];
+                    slider.addEventListener("input", () => { window.sliderValue = Number(slider.value); });
+                    for (const type of ["mousedown", "mousemove", "mouseup"])
+                        slider.addEventListener(type, event => window.sliderEvents.push(event.type));
+                </script>
+            </body>
+            """
+
+        try await page.load(html: html).wait()
+        await page.waitForNextPresentationUpdate()
+
+        let track = try await screenBounds(ofElementWithID: "slider")
+
+        try await dragAcrossThinRangeInput(startingFrom: dragStart, track: track)
+
+        #expect(try await sliderValue() > 0)
+        #expect(try await sliderEvents().first == "mousedown")
+        #expect(try await settledScrollPosition() == .zero)
     }
 
     @Test(
@@ -1417,6 +1499,51 @@ extension AppKitGesturesTests.Basic {
                 )
             }
         }
+    }
+
+    @Test(
+        .bug("https://webkit.org/b/324696", "Synthesized mouse events always report zero movementX|Y")
+    )
+    func pressDragOnImageReportsMovement() async throws {
+        let baseURL = try #require(Bundle.testResources.resourceURL)
+        let html = """
+            <img id="img" src="400x400-green.png" style="display: block; margin: 50px;">
+            <script>
+            window.movementY = [];
+            window.clientY = [];
+            document.addEventListener("dragstart", event => event.preventDefault());
+            document.addEventListener("mousemove", event => {
+                window.movementY.push(event.movementY);
+                window.clientY.push(event.clientY);
+            });
+            </script>
+            """
+        try await page.load(html: html, baseURL: baseURL).wait()
+
+        let imgViewportBounds = try await page.callJavaScript(JavaScriptMessages.BoundingClientRect(elementID: "img"))
+        let imgBounds = screenBounds(ofRectInViewportCoordinates: imgViewportBounds)
+
+        await recap.play { composer in
+            composer._wk_drag(
+                withStart: imgBounds.center,
+                end: CGPoint(x: imgBounds.center.x, y: imgBounds.midY + 200),
+                duration: .seconds(1.5),
+                pressAndWait: .seconds(1.0)
+            )
+        }
+
+        await page.waitForNextPresentationUpdate()
+
+        let (movementY, clientY) = try await page.callJavaScript(returning: ([Double], [Double]).self) {
+            """
+            return [window.movementY, window.clientY];
+            """
+        }
+
+        let reported = movementY.dropFirst().reduce(0, +)
+        let firstClientY = try #require(clientY.first)
+        let lastClientY = try #require(clientY.last)
+        #expect(abs(reported - (lastClientY - firstClientY)) <= 2)
     }
 
     @Test(
@@ -2096,13 +2223,13 @@ extension AppKitGesturesTests.Basic {
 
         await page.waitForNextPresentationUpdate()
 
-        let textAreaBoundsAfter = try await screenBoundsOfTextArea()
+        let textAreaSizeBefore = textAreaBoundsBefore.size
+        let textAreaSizeAfter = try await screenBoundsOfTextArea().size
 
-        if !canResize {
-            #expect(textAreaBoundsBefore == textAreaBoundsAfter)
+        if canResize {
+            #expect(textAreaSizeBefore != textAreaSizeAfter)
         } else {
-            #expect(textAreaBoundsBefore.origin == textAreaBoundsAfter.origin)
-            #expect(textAreaBoundsBefore.size != textAreaBoundsAfter.size)
+            #expect(textAreaSizeBefore == textAreaSizeAfter)
         }
     }
 }
@@ -2170,7 +2297,7 @@ extension CGPoint {
 
 extension AppKitGesturesTests.Basic {
     @discardableResult
-    private func dragAcrossSlider(useNativeWidget: Bool) async throws -> String {
+    private func dragAcrossSlider(useNativeWidget: Bool, verticalTravelFraction: Double = 0) async throws -> String {
         let elementID = useNativeWidget ? "native-slider" : "custom-slider"
 
         let customHTML = try #require(Bundle.testResources.url(forResource: "custom-slider", withExtension: "html"))
@@ -2188,7 +2315,10 @@ extension AppKitGesturesTests.Basic {
         let convertedSliderBounds = screenBounds(ofRectInViewportCoordinates: sliderBounds)
 
         let start = convertedSliderBounds.center
-        let end = CGPoint(x: convertedSliderBounds.maxX, y: convertedSliderBounds.center.y)
+        let end = CGPoint(
+            x: convertedSliderBounds.maxX,
+            y: convertedSliderBounds.center.y + convertedSliderBounds.height * verticalTravelFraction
+        )
 
         await recap.play { composer in
             composer._wk_drag(withStart: start, end: end, duration: .seconds(1.5), pressAndWait: .seconds(0.5))
@@ -2288,6 +2418,44 @@ extension AppKitGesturesTests.Basic {
                 duration: .seconds(0.2),
                 pressAndWait: .seconds(0.2)
             )
+        }
+
+        await page.waitForPendingMouseEvents()
+        await page.waitForNextPresentationUpdate()
+    }
+
+    enum ThinSliderDragStart: Sendable, CaseIterable {
+        case onTrack
+
+        case justAbove
+
+        case justBelow
+
+        static let nearMiss: CGFloat = 6
+
+        static let fractionAcrossTrack: CGFloat = 0.8
+
+        func startY(forTrack track: CGRect) -> CGFloat {
+            switch self {
+            case .onTrack: track.midY
+            case .justAbove: track.minY - Self.nearMiss
+            case .justBelow: track.maxY + Self.nearMiss
+            }
+        }
+    }
+
+    private func dragAcrossThinRangeInput(
+        startingFrom start: ThinSliderDragStart,
+        track: CGRect
+    ) async throws {
+        let startPoint = CGPoint(
+            x: track.minX + track.width * ThinSliderDragStart.fractionAcrossTrack,
+            y: start.startY(forTrack: track)
+        )
+        let endPoint = CGPoint(x: track.maxX, y: startPoint.y)
+
+        await recap.play { composer in
+            composer._wk_drag(withStart: startPoint, end: endPoint, duration: .seconds(0.2), release: true)
         }
 
         await page.waitForPendingMouseEvents()

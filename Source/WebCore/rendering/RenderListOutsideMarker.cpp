@@ -83,7 +83,7 @@ void RenderListOutsideMarker::willBeDestroyed()
     RenderBox::willBeDestroyed();
 }
 
-static Style::Difference NODELETE adjustedStyleDifference(Style::Difference diff, const Style::ComputedStyle& oldStyle, const Style::ComputedStyle& newStyle)
+static Style::Difference adjustedStyleDifference(Style::Difference diff, const Style::ComputedStyle& oldStyle, const Style::ComputedStyle& newStyle)
 {
     if (diff >= Style::DifferenceResult::Layout)
         return diff;
@@ -463,11 +463,6 @@ bool listMarkerSynthesizesGlyph(const Style::ComputedStyle& markerStyle, Documen
 
 ListMarkerTextContent listMarkerTextContent(const Style::ComputedStyle& markerStyle, RenderListItem& listItem)
 {
-    auto makeTextContentForCounter = [&](CSSRegisteredCounterStyle& counter) {
-        auto text = makeString(counter.prefix().text, counter.text(listItem.value(), markerStyle.writingMode()));
-        return ListMarkerTextContent { .textWithSuffix = makeString(text, counter.suffix().text), .textWithoutSuffixLength = text.length() };
-    };
-
     return WTF::switchOn(markerStyle.listStyleType(),
         [&](const CSS::Keyword::None&) {
             return ListMarkerTextContent { .textWithSuffix = " "_s, .textWithoutSuffixLength = 0 };
@@ -475,8 +470,10 @@ ListMarkerTextContent listMarkerTextContent(const Style::ComputedStyle& markerSt
         [&](const Style::String& identifier) {
             return ListMarkerTextContent { .textWithSuffix = identifier.value, .textWithoutSuffixLength = identifier.value.length() };
         },
-        [&](const Style::CounterStyle& counterStyle) {
-            return makeTextContentForCounter(protect(listItem.document())->counterStyleRegistry().resolvedCounterStyle(counterStyle));
+        [&](const auto& counterStyle) {
+            auto counter = protect(listItem.document())->counterStyleRegistry().resolvedCounterStyle(counterStyle);
+            auto text = makeString(counter->prefix().text, counter->text(listItem.value(), markerStyle.writingMode()));
+            return ListMarkerTextContent { .textWithSuffix = makeString(text, counter->suffix().text), .textWithoutSuffixLength = text.length() };
         }
     );
 }

@@ -98,7 +98,7 @@ uint32_t TextureView::depthOrArrayLayers() const
     return m_parentTexture->physicalMiplevelSpecificTextureExtent(baseMipLevel()).depthOrArrayLayers;
 }
 
-WGPUTextureUsageFlags TextureView::usage() const
+WGPUTextureUsage TextureView::usage() const
 {
     // The descriptor's usage was resolved to the parent texture's usage when the view was created
     // if the view did not narrow it, so this is the set of usages the view itself allows.
@@ -196,7 +196,7 @@ id<MTLRasterizationRateMap> TextureView::rasterizationMapForSlice(uint32_t slice
 
 #pragma mark WGPU Stubs
 
-void NODELETE wgpuTextureViewReference(WGPUTextureView textureView)
+void NODELETE wgpuTextureViewAddRef(WGPUTextureView textureView)
 {
     WebGPU::fromAPI(textureView).ref();
 }

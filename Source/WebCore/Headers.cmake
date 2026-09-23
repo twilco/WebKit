@@ -782,6 +782,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     Modules/webcodecs/WebCodecsAudioData.h
     Modules/webcodecs/WebCodecsAudioInternalData.h
     Modules/webcodecs/WebCodecsBase.h
+    Modules/webcodecs/WebCodecsBufferTransfer.h
     Modules/webcodecs/WebCodecsEncodedAudioChunk.h
     Modules/webcodecs/WebCodecsEncodedAudioChunkData.h
     Modules/webcodecs/WebCodecsEncodedAudioChunkType.h
@@ -1203,6 +1204,8 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     css/values/color/CSSHexColor.h
     css/values/color/CSSKeywordColor.h
     css/values/color/CSSResolvedColor.h
+
+    css/values/counter-styles/CSSCounterStyle.h
 
     css/values/flexbox/CSSFlexWrap.h
 
@@ -1931,6 +1934,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     loader/OriginAgentClusterPolicy.h
     loader/PCMSites.h
     loader/PCMTokens.h
+    loader/PendingNavigateEventIdentifier.h
     loader/PingLoader.h
     loader/PolicyChecker.h
     loader/PolicyContainer.h
@@ -2111,6 +2115,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     page/ScreenOrientationType.h
     page/ScriptTrackingPrivacyCategory.h
     page/ScrollBehavior.h
+    page/ScrollIntoViewContainer.h
     page/ScrollIntoViewOptions.h
     page/ScrollLogicalPosition.h
     page/ScrollOptions.h
@@ -2154,6 +2159,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     page/UserStyleSheetTypes.h
     page/ValidationMessageClient.h
     page/ViewportConfiguration.h
+    page/ViewportProximityInfo.h
     page/VisitedLinkStore.h
     page/WebCoreKeyboardUIMode.h
     page/WebKitBuffer.h
@@ -2610,6 +2616,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     platform/graphics/GraphicsStyle.h
     platform/graphics/GraphicsTypes.h
     platform/graphics/GraphicsTypesGL.h
+    platform/graphics/H264Utilities.h
     platform/graphics/HEVCUtilities.h
     platform/graphics/HostingContext.h
     platform/graphics/Icon.h
@@ -2799,6 +2806,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     platform/graphics/egl/GLContextWrapper.h
     platform/graphics/egl/GLDisplay.h
     platform/graphics/egl/GLFence.h
+    platform/graphics/egl/GraphicsContextGLEGL.h
 
     platform/graphics/filters/DistantLightSource.h
     platform/graphics/filters/FEBlend.h
@@ -3324,6 +3332,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     style/values/color/StyleDynamicRangeLimitMix.h
     style/values/color/StyleOpacity.h
     style/values/color/StyleResolvedColor.h
+    style/values/color/StyleResolvedColors.h
 
     style/values/contain/StyleContain.h
     style/values/contain/StyleContainerName.h

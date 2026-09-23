@@ -60,6 +60,8 @@ class VideoFrame;
 
 enum class RequiresClipToRect : bool { No, Yes };
 
+enum class ShouldDiscardAlpha : bool { No, Yes };
+
 namespace DisplayList {
 class DisplayList;
 }
@@ -170,6 +172,10 @@ public:
     // Called *after* any change to GraphicsContextState; generally used to propagate changes
     // to the platform context's state.
     virtual void didUpdateState(GraphicsContextState&) = 0;
+
+    void didInvalidatePlatformState(GraphicsContextState::ChangeFlags properties) { m_state.markChanged(properties); }
+
+    void updatePlatformContextState() { didUpdateState(m_state); }
 
     WEBCORE_EXPORT virtual void save(GraphicsContextState::Purpose = GraphicsContextState::Purpose::SaveRestore);
     WEBCORE_EXPORT virtual void restore(GraphicsContextState::Purpose = GraphicsContextState::Purpose::SaveRestore);
@@ -290,7 +296,7 @@ public:
     WEBCORE_EXPORT virtual void drawControlPart(ControlPart&, const FloatRoundedRect& borderRect, float deviceScaleFactor, const ControlStyle&);
 
 #if ENABLE(VIDEO)
-    WEBCORE_EXPORT virtual void drawVideoFrame(const VideoFrame&, const FloatRect& destination, ImageOrientation, bool shouldDiscardAlpha);
+    WEBCORE_EXPORT virtual void drawVideoFrame(const VideoFrame&, const FloatRect& destination, ShouldDiscardAlpha, ImagePaintingOptions = { });
 #endif
 
     // Clipping

@@ -29,6 +29,7 @@
 
 #include <WebCore/AsyncNodeDeletionQueue.h>
 #include <WebCore/Color.h>
+#include <WebCore/ColorHash.h>
 #include <WebCore/ContainerNode.h>
 #include <WebCore/ContextDestructionObserver.h>
 #include <WebCore/DocumentClasses.h>
@@ -99,6 +100,9 @@ class TextEncoding;
 namespace WebCore {
 
 class AXObjectCache;
+#if ENABLE(AX_CUSTOM_COLOR_MODE)
+class AXCustomColorModeController;
+#endif
 class AppHighlightStorage;
 class Attr;
 class CanvasBase;
@@ -414,7 +418,7 @@ enum class HttpEquivPolicy : uint8_t {
     DisabledByContentDispositionAttachmentSandbox
 };
 
-enum class CustomElementNameValidationStatus {
+enum class CustomElementNameValidationStatus : uint8_t {
     Valid,
     FirstCharacterIsNotLowercaseASCIILetter,
     ContainsNoHyphen,
@@ -768,6 +772,8 @@ public:
     OptionSet<StyleColorOptions> styleColorOptions(const Style::ComputedStyle*) const;
 
     CompositeOperator compositeOperatorForBackgroundColor(const Color&, const RenderElement&) const;
+
+    bool backgroundColorIsPunchedOut(const Color&, const RenderElement&) const;
 
     WEBCORE_EXPORT Ref<Range> createRange();
 
@@ -1659,8 +1665,11 @@ public:
     void didAssociateFormControl(Element&);
 
 #if ENABLE(AX_CUSTOM_COLOR_MODE)
-    bool addAXCustomColorModeAdjustedElement(Element&);
-    bool isAXCustomColorModeAdjustedElement(const Element&) const;
+    AXCustomColorModeController* axCustomColorModeControllerIfExists() { return m_axCustomColorModeController.get(); }
+    const AXCustomColorModeController* axCustomColorModeControllerIfExists() const { return m_axCustomColorModeController.get(); }
+    AXCustomColorModeController& axCustomColorModeController();
+
+    bool isAXCustomColorModeActive() const;
 #endif
 
     void adjustStyleColorOptionsIfNeeded(OptionSet<StyleColorOptions>&) const;
@@ -1983,7 +1992,7 @@ public:
     void setPaintWorkletGlobalScopeForName(const String& name, Ref<PaintWorkletGlobalScope>&&);
 
     WEBCORE_EXPORT bool hitTest(const HitTestRequest&, HitTestResult&);
-    bool hitTest(const HitTestRequest&, const HitTestLocation&, HitTestResult&);
+    WEBCORE_EXPORT bool hitTest(const HitTestRequest&, const HitTestLocation&, HitTestResult&);
 #if ASSERT_ENABLED
     bool inHitTesting() const { return m_inHitTesting; }
 #endif
@@ -2096,7 +2105,7 @@ public:
 
     String mediaKeysStorageDirectory();
 
-    void invalidateDOMCookieCache();
+    WEBCORE_EXPORT void invalidateDOMCookieCache();
 
     void detachFromFrame();
     void NODELETE willBeDisconnectedFromFrame(Document&);
@@ -2238,7 +2247,7 @@ private:
 
     void setVisualUpdatesAllowed(ReadyState);
 
-    enum class VisualUpdatesPreventedReason {
+    enum class VisualUpdatesPreventedReason : uint8_t {
         ReadyState     = 1 << 0,
         Suspension     = 1 << 1,
         RenderBlocking = 1 << 2,
@@ -2618,7 +2627,7 @@ private:
 
     WeakHashSet<Element, WeakPtrImplWithEventTargetData> m_associatedFormControls;
 #if ENABLE(AX_CUSTOM_COLOR_MODE)
-    WeakHashSet<Element, WeakPtrImplWithEventTargetData> m_axCustomColorModeAdjustedElements;
+    std::unique_ptr<AXCustomColorModeController> m_axCustomColorModeController;
 #endif
 
     const std::unique_ptr<OrientationNotifier> m_orientationNotifier;

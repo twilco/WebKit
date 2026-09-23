@@ -262,7 +262,7 @@ void HTMLSelectElement::optionSelectedByUser(int optionIndex, bool fireOnChangeN
 {
     // User interaction such as mousedown events can cause list box select elements to send change events.
     // This produces that same behavior for changes triggered by other code running on behalf of the user.
-    if (!usesMenuListDeprecated()) {
+    if (!isSingleSelectDropdownBox()) {
         updateSelectedState(optionToListIndex(optionIndex), allowMultipleSelection, false);
         updateValidity();
         if (CheckedPtr renderer = this->renderer())
@@ -340,13 +340,17 @@ bool HTMLSelectElement::usesMenuList() const
 #endif
 }
 
-bool HTMLSelectElement::usesMenuListDeprecated() const
+bool HTMLSelectElement::isSingleSelectDropdownBox() const
 {
-#if !PLATFORM(IOS_FAMILY)
-    return !m_multiple && m_size <= 1;
-#else
-    return !m_multiple;
-#endif
+    return !m_multiple && usesMenuList();
+}
+
+// https://html.spec.whatwg.org/multipage/form-elements.html#concept-select-size
+unsigned HTMLSelectElement::preferredSize() const
+{
+    if (m_size >= 1)
+        return m_size;
+    return m_multiple ? 4 : 1;
 }
 
 bool HTMLSelectElement::usesBaseAppearancePicker() const
@@ -1086,7 +1090,7 @@ void HTMLSelectElement::selectAll()
 
 void HTMLSelectElement::saveLastSelection()
 {
-    if (usesMenuListDeprecated()) {
+    if (isSingleSelectDropdownBox()) {
         m_lastOnChangeIndex = selectedIndex();
         return;
     }
@@ -1151,7 +1155,7 @@ void HTMLSelectElement::updateListBoxSelection(bool deselectOtherOptions)
 
 void HTMLSelectElement::listBoxOnChange()
 {
-    ASSERT(!usesMenuListDeprecated() || m_multiple);
+    ASSERT(!isSingleSelectDropdownBox());
 
     auto& items = listItems();
 
@@ -1182,7 +1186,7 @@ void HTMLSelectElement::listBoxOnChange()
 
 void HTMLSelectElement::dispatchChangeEventForMenuList()
 {
-    ASSERT(usesMenuListDeprecated());
+    ASSERT(isSingleSelectDropdownBox());
 
     int selected = selectedIndex();
     if (m_lastOnChangeIndex != selected && m_isProcessingUserDrivenChange) {
@@ -1376,7 +1380,7 @@ void HTMLSelectElement::optionSelectionStateChanged(HTMLOptionElement& option, b
     ASSERT(option.ownerSelectElement() == this);
     if (optionIsSelected)
         selectOption(option.index());
-    else if (!usesMenuListDeprecated())
+    else if (!isSingleSelectDropdownBox())
         selectOption(-1);
     else
         selectOption(nextSelectableListIndex(-1));
@@ -1418,7 +1422,7 @@ void HTMLSelectElement::selectOption(int optionIndex, OptionSet<SelectOptionFlag
 
     scrollToSelection();
 
-    if (usesMenuListDeprecated()) {
+    if (isSingleSelectDropdownBox()) {
         m_isProcessingUserDrivenChange = flags.contains(SelectOptionFlag::UserDriven);
         if (flags.contains(SelectOptionFlag::DispatchChangeEvent))
             dispatchChangeEventForMenuList();
@@ -1465,7 +1469,7 @@ void HTMLSelectElement::dispatchFocusEvent(RefPtr<Element>&& oldFocusedElement, 
 {
     // Save the selection so it can be compared to the new selection when
     // dispatching change events during blur event dispatch.
-    if (usesMenuListDeprecated())
+    if (isSingleSelectDropdownBox())
         saveLastSelection();
     HTMLFormControlElement::dispatchFocusEvent(WTF::move(oldFocusedElement), options);
 }
@@ -1475,7 +1479,7 @@ void HTMLSelectElement::dispatchBlurEvent(RefPtr<Element>&& newFocusedElement)
     // We only need to fire change events here for menu lists, because we fire
     // change events for list boxes whenever the selection change is actually made.
     // This matches other browsers' behavior.
-    if (usesMenuListDeprecated())
+    if (isSingleSelectDropdownBox())
         dispatchChangeEventForMenuList();
     HTMLFormControlElement::dispatchBlurEvent(WTF::move(newFocusedElement));
 }
@@ -2146,7 +2150,7 @@ void HTMLSelectElement::typeAheadFind(KeyboardEvent& event)
     if (index < 0)
         return;
     selectOption(listToOptionIndex(index), { SelectOptionFlag::DeselectOtherOptions, SelectOptionFlag::DispatchChangeEvent, SelectOptionFlag::UserDriven });
-    if (!usesMenuListDeprecated())
+    if (!isSingleSelectDropdownBox())
         listBoxOnChange();
 }
 
@@ -2160,7 +2164,7 @@ void HTMLSelectElement::accessKeySetSelectedIndex(int index)
     // First bring into focus the list box.
     if (!focused())
         accessKeyAction(false);
-    
+
     // If this index is already selected, unselect. otherwise update the selected index.
     auto& items = listItems();
     int listIndex = optionToListIndex(index);
@@ -2173,7 +2177,7 @@ void HTMLSelectElement::accessKeySetSelectedIndex(int index)
         }
     }
 
-    if (usesMenuListDeprecated())
+    if (isSingleSelectDropdownBox())
         dispatchChangeEventForMenuList();
     else
         listBoxOnChange();

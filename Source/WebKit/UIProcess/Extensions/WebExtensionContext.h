@@ -52,6 +52,7 @@
 #include "WebExtensionMenuItem.h"
 #include "WebExtensionMessagePort.h"
 #include "WebExtensionMessageSenderParameters.h"
+#include "WebExtensionNotificationParameters.h"
 #include "WebExtensionPortChannelIdentifier.h"
 #include "WebExtensionRegisteredScriptsSQLiteStore.h"
 #include "WebExtensionStorageAccessLevel.h"
@@ -630,6 +631,7 @@ public:
     void sendTestStarted(id argument);
     void sendTestFinished(id argument);
     void reloadBackgroundContentForTesting();
+    void unloadBackgroundContentForTesting();
 #endif
 
     URL backgroundContentURL();
@@ -978,6 +980,13 @@ private:
     void menusRemoveAll(CompletionHandler<void(std::expected<void, WebExtensionError>&&)>&&);
     void fireMenusClickedEventIfNeeded(const WebExtensionMenuItem&, bool wasChecked, const WebExtensionMenuItemContextParameters&);
 
+#if ENABLE(WK_WEB_EXTENSIONS_NOTIFICATIONS)
+    // Notifications APIs
+    bool isNotificationsMessageAllowed(IPC::Decoder&);
+
+    void notificationsCreate(const WebExtensionNotificationParameters&, CompletionHandler<void()>&&);
+#endif
+
 #if ENABLE(WK_WEB_EXTENSIONS_OFFSCREEN)
     // Offscreen APIs
     bool isOffscreenMessageAllowed(IPC::Decoder&);
@@ -1265,6 +1274,10 @@ private:
 
     MenuItemMap m_menuItems;
     MenuItemVector m_mainMenuItems;
+
+#if ENABLE(WK_WEB_EXTENSIONS_NOTIFICATIONS)
+    HashMap<String, WebExtensionNotificationParameters> m_notifications;
+#endif
 
     WebExtensionStorageAccessLevelMap m_storageAccessLevels;
 

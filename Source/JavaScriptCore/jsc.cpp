@@ -1478,9 +1478,9 @@ private:
     {
         if (!cacheEnabled())
             return { };
-        const char* cachePath = Options::diskCachePath();
+        String cachePath { Options::diskCachePath() };
         String filename = FileSystem::encodeForFileName(FileSystem::lastComponentOfPathIgnoringTrailingSlash(sourceOrigin().url().fileSystemPath()));
-        return FileSystem::pathByAppendingComponent(StringView::fromLatin1(cachePath), makeString(source().hash(), '-', filename, ".bytecode-cache"_s));
+        return FileSystem::pathByAppendingComponent(cachePath, makeString(source().hash(), '-', filename, ".bytecode-cache"_s));
     }
 
     void loadBytecode() const
@@ -1521,7 +1521,7 @@ private:
 
 static inline SourceCode jscSource(const String& source, const SourceOrigin& sourceOrigin, String sourceURL = String(), const TextPosition& startPosition = TextPosition(), SourceProviderSourceType sourceType = SourceProviderSourceType::Program)
 {
-    return SourceCode(ShellSourceProvider::create(source, sourceOrigin, WTF::move(sourceURL), startPosition, sourceType), startPosition.m_line.oneBasedInt(), startPosition.m_column.oneBasedInt());
+    return SourceCode(ShellSourceProvider::create(source, sourceOrigin, WTF::move(sourceURL), startPosition, sourceType));
 }
 
 template<typename Vector>
@@ -3814,7 +3814,7 @@ int main(int argc, char** argv)
         CommaPrinter space(" "_s);
         for (int i = 0; i < argc; ++i)
             out.print(space, argv[i]);
-        WTF::setCrashLogMessage(out.toUTF8CString().legacyCStringPointer());
+        WTF::setCrashLogMessage(out.toUTF8CString());
     }
 #endif
 

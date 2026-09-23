@@ -182,6 +182,7 @@
 #include "ScrollLatchingController.h"
 #include "ScrollingCoordinator.h"
 #include "ServiceWorkerGlobalScope.h"
+#include "ServiceWorkerThread.h"
 #include "Settings.h"
 #include "SharedBuffer.h"
 #include "SocketProvider.h"
@@ -274,6 +275,10 @@
 
 #if ENABLE(MODEL_ELEMENT_IMMERSIVE)
 #include "DocumentImmersive.h"
+#endif
+
+#if __has_include(<WebKitAdditions/PageAdditions.cpp>)
+#include <WebKitAdditions/PageAdditions.cpp>
 #endif
 
 namespace WebCore {
@@ -540,6 +545,10 @@ Page::Page(PageConfiguration&& pageConfiguration)
 #endif
 
     settingsDidChange();
+
+#if ENABLE(AX_CUSTOM_COLOR_MODE)
+    resetAXCustomColorModeActive();
+#endif
 
     if (m_lowPowerModeNotifier->isLowPowerModeEnabled())
         m_throttlingReasons.add(ThrottlingReason::LowPowerMode);
@@ -2340,7 +2349,7 @@ void Page::syncLocalFrameInfoToRemote()
                 !!child->ownerRenderer(),
                 frameView->childFrameOwnerToRootContentTransform(*child),
                 WTF::move(absoluteToChildFrameOwnerLocalTransform),
-                frame.usedZoomForChild(*child),
+                frame.frameScaleFactorForChild(*child),
                 contentBoxLocation,
                 frameView->appearanceOfOwnerElementOfChildFrame(*child)
             ));
@@ -4680,6 +4689,10 @@ void Page::didChangeMainDocument(Document* newDocument)
 
     clearSampledPageTopColor();
 
+#if ENABLE(AX_CUSTOM_COLOR_MODE)
+    resetAXCustomColorModeState();
+#endif
+
 #if ENABLE(DEVICE_ORIENTATION)
     clearDeviceOrientationAndMotionPermissions();
 #endif
@@ -5351,6 +5364,14 @@ void Page::setServiceWorkerGlobalScope(ServiceWorkerGlobalScope& serviceWorkerGl
     ASSERT(isMainThread());
     ASSERT(m_isServiceWorkerPage);
     m_serviceWorkerGlobalScope = serviceWorkerGlobalScope;
+}
+
+RefPtr<ServiceWorkerThread> Page::serviceWorkerThread() const
+{
+    RefPtr serviceWorkerGlobalScope = m_serviceWorkerGlobalScope.get();
+    if (!serviceWorkerGlobalScope)
+        return nullptr;
+    return serviceWorkerGlobalScope->thread();
 }
 
 StorageConnection& Page::storageConnection()

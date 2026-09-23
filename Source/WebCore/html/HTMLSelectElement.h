@@ -78,12 +78,11 @@ public:
     WEBCORE_EXPORT unsigned length() const;
 
     unsigned size() const { return m_size; }
+    unsigned NODELETE preferredSize() const;
     bool multiple() const { return m_multiple; }
 
     bool NODELETE usesMenuList() const;
-
-    // This method is deprecated because the return value doesn't match the rendering on iOS for multiple selects.
-    bool NODELETE usesMenuListDeprecated() const;
+    bool NODELETE isSingleSelectDropdownBox() const;
 
     using OptionOrOptGroupElement = Variant<Ref<HTMLOptionElement>, Ref<HTMLOptGroupElement>>;
     using HTMLElementOrInt = Variant<Ref<HTMLElement>, int>;
